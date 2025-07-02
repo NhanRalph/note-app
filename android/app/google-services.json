@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "529456653714",
+    "project_id": "note-app-hdw",
+    "storage_bucket": "note-app-hdw.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:529456653714:android:b541261cd5402c34694d4b",
+        "android_client_info": {
+          "package_name": "com.chotangapp.noteApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsYGlDBbvmo5RbNgVIlaXQ5DTiG0co7RE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
