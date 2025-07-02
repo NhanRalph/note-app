@@ -3,7 +3,7 @@ import Colors from '@/src/constants/Colors';
 import { useAppDispatch } from '@/src/hook/useDispatch';
 import { useNavigation } from '@/src/hook/useNavigation';
 import { RootState } from '@/src/redux/rootReducer';
-import { login } from '@/src/redux/slices/authSlices';
+import { login, signInGoogle } from '@/src/redux/slices/authSlices';
 import { loginSchema } from '@/src/utils/validationSchema';
 import { Formik } from 'formik';
 import { useEffect } from 'react';
@@ -34,60 +34,88 @@ export default function LoginScreen() {
 
   };
 
-  const goHome = () => {
-    navigation.navigate('Main', {
-      screen: 'Home',
-    });
+  const loginGoogle = () => {
+    dispatch(signInGoogle())
+      .unwrap()
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Đăng nhập / Đăng ký</Text>
+      <Text style={styles.title}>Đăng nhập</Text>
 
       <Formik
         initialValues={initialValues}
         validationSchema={loginSchema}
         onSubmit={handleSubmit}
       >
-        {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+        {({
+          handleChange,
+          handleBlur,
+          handleSubmit,
+          values,
+          errors,
+          touched,
+        }) => (
           <>
             <TextInput
               style={styles.input}
               placeholder="Email"
               placeholderTextColor="#999"
-              onChangeText={handleChange('email')}
-              onBlur={handleBlur('email')}
+              onChangeText={handleChange("email")}
+              onBlur={handleBlur("email")}
               value={values.email}
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            {touched.email && errors.email && <Text style={styles.error}>{errors.email}</Text>}
+            {touched.email && errors.email && (
+              <Text style={styles.error}>{errors.email}</Text>
+            )}
 
             <TextInput
               style={styles.input}
               placeholder="Mật khẩu"
               placeholderTextColor="#999"
               secureTextEntry
-              onChangeText={handleChange('password')}
-              onBlur={handleBlur('password')}
+              onChangeText={handleChange("password")}
+              onBlur={handleBlur("password")}
               value={values.password}
             />
-            {touched.password && errors.password && <Text style={styles.error}>{errors.password}</Text>}
+            {touched.password && errors.password && (
+              <Text style={styles.error}>{errors.password}</Text>
+            )}
 
-              <Button title="Đăng nhập" size="large" color={Colors.primary600} onPress={handleSubmit} loading={loading}/>
+            <Button
+              title="Đăng nhập"
+              size="large"
+              color={Colors.primary600}
+              onPress={handleSubmit}
+              loading={loading}
+            />
           </>
         )}
       </Formik>
 
+      <TouchableOpacity
+        onPress={() => navigation.navigate("SignUpScreen")}
+        style={styles.floatLeft}
+      >
+        <Text style={styles.createAccountText}>Tạo tài khoản mới</Text>
+      </TouchableOpacity>
+
       <Text style={styles.orText}>Hoặc tiếp tục với</Text>
 
       <View style={styles.socialContainer}>
-        <TouchableOpacity style={[styles.socialButton, { backgroundColor: '#DB4437' }]} onPress={goHome}>
+        <TouchableOpacity
+          style={[styles.socialButton, { backgroundColor: "#DB4437" }]}
+          onPress={loginGoogle}
+        >
           {/* <Image source={require('@/assets/google.png')} style={styles.socialIcon} /> */}
           <Text style={styles.socialText}>Google</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.socialButton, { backgroundColor: '#3b5998' }]}>
+        <TouchableOpacity
+          style={[styles.socialButton, { backgroundColor: "#3b5998" }]}
+        >
           {/* <Image source={require('@/assets/facebook.png')} style={styles.socialIcon} /> */}
           <Text style={styles.socialText}>Facebook</Text>
         </TouchableOpacity>
@@ -147,5 +175,18 @@ const styles = StyleSheet.create({
   socialText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  floatLeft: {
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  createAccountText: {
+    color: Colors.primary600,
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "bold",
+    textDecorationLine: "underline",
   },
 });

@@ -12,7 +12,20 @@
           "package_name": "com.chotangapp.noteApp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "529456653714-oum1hj8vj9usqe6jjmjt0jve7o2ch7cv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.chotangapp.noteApp",
+            "certificate_hash": "1f00bfc4b08a3d82de9b1413c9d622e8620b8565"
+          }
+        },
+        {
+          "client_id": "529456653714-rpvugao17vs3fhkn4saqlallkhg5eqca.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDsYGlDBbvmo5RbNgVIlaXQ5DTiG0co7RE"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "529456653714-rpvugao17vs3fhkn4saqlallkhg5eqca.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

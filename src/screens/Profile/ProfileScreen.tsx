@@ -22,10 +22,6 @@ export default function ProfileScreen() {
         text: "Đăng xuất",
         onPress: () => {
           dispatch(logout()).unwrap();
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "LoginScreen" }],
-          });
         },
         style: "destructive",
       },
@@ -40,12 +36,23 @@ export default function ProfileScreen() {
       <UserInfoRow label="SĐT" value={"0123456789"} />
 
       <View style={styles.logoutBtn}>
-        <Button
-          size={"large"}
-          title="Đăng xuất"
-          color={Colors.primary500}
-          onPress={handleLogout}
-        />
+        {
+          user ? (
+            <Button
+              size={"large"}
+              title="Đăng xuất"
+              color={Colors.primary500}
+              onPress={handleLogout}
+            />
+          ) : (
+            <Button
+              size={"large"}
+              title="Đăng nhập"
+              color={Colors.primary500}
+              onPress={() => navigation.navigate("LoginScreen")}
+            />
+          )
+        }
       </View>
     </View>
   );

@@ -1,6 +1,7 @@
 import {
   logout as firebaseLogout,
   loginWithEmail,
+  signInWithGoogle,
   signUpWithEmail,
 } from "@/src/api/authAPI";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
@@ -35,6 +36,19 @@ export const login = createAsyncThunk(
       return { uid: user.uid, email: user.email };
     } catch (error: any) {
       return rejectWithValue(error.message || "Đăng nhập thất bại");
+    }
+  }
+);
+
+// Đăng nhập với Google
+export const signInGoogle = createAsyncThunk(
+  "auth/signInWithGoogle",
+  async (_, { rejectWithValue }) => {
+    try {
+      const user = await signInWithGoogle();
+      return { uid: user.uid, email: user.email };
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Đăng nhập Google thất bại");
     }
   }
 );
@@ -85,6 +99,23 @@ const authSlice = createSlice({
         Alert.alert("Lỗi đăng nhập", state.error);
       });
 
+    // SignIn with Google
+    builder
+      .addCase(signInGoogle.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(signInGoogle.fulfilled, (state, action) => {
+        console.log("SignIn Google payload:", action.payload);
+        state.loading = false;
+        state.user = action.payload;
+      })
+      .addCase(signInGoogle.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        Alert.alert("Lỗi đăng nhập Google", state.error);
+      });
+
     // SignUp
     builder
       .addCase(signUp.pending, (state) => {
@@ -92,12 +123,14 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(signUp.fulfilled, (state, action) => {
+        console.log("SignUp payload:", action.payload);
         state.loading = false;
         state.user = action.payload;
       })
       .addCase(signUp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        Alert.alert("Lỗi đăng ký", state.error);
       });
 
     // Logout
