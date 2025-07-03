@@ -38,7 +38,7 @@ export const createGroupStore = createAsyncThunk(
   ) => {
     try {
       await createGroup(userId, name);
-      dispatch(getGroupsStore({ userId })); // Gọi lại danh sách
+      dispatch(getGroupsStore({ userId }));
     } catch (error: any) {
       return rejectWithValue(error.message || "Lỗi khi tạo nhóm");
     }
@@ -53,10 +53,11 @@ export const updateGroupStore = createAsyncThunk(
       groupId,
       name,
     }: { userId: string; groupId: string; name: string },
-    { rejectWithValue }
+    { dispatch, rejectWithValue }
   ) => {
     try {
       await updateGroup(userId, groupId, name);
+      dispatch(getGroupsStore({ userId }));
       return { id: groupId, name };
     } catch (error: any) {
       return rejectWithValue(error.message || "Lỗi khi cập nhật nhóm");
@@ -68,10 +69,11 @@ export const deleteGroupStore = createAsyncThunk(
   "group/deleteGroup",
   async (
     { userId, groupId }: { userId: string; groupId: string },
-    { rejectWithValue }
+    { dispatch, rejectWithValue }
   ) => {
     try {
       await deleteGroup(userId, groupId);
+      dispatch(getGroupsStore({ userId }));
       return { id: groupId };
     } catch (error: any) {
       return rejectWithValue(error.message || "Lỗi khi xoá nhóm");

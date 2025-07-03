@@ -51,7 +51,7 @@ export const createNote = async (
     title: string;
     content: string;
     images?: string[];
-    groupId?: string;
+    groupId: string | null;
   }
 ) => {
   const noteRef = firestore().collection(`users/${userId}/notes`).doc();

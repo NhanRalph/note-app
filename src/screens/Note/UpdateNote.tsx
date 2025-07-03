@@ -1,11 +1,10 @@
-import { createNote } from "@/src/api/noteAPI";
+import { updateNote } from "@/src/api/noteAPI";
 import Button from "@/src/components/Button/Button";
 import Colors from "@/src/constants/Colors";
 import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
-import { fetchNotes } from "@/src/redux/slices/noteSlices";
 import { createNoteSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
@@ -24,19 +23,20 @@ import {
 } from "react-native";
 import { useSelector } from "react-redux";
 
-interface CreateNoteScreenProps {
-  route: RouteProp<RootStackParamList, "CreateNote">;
+interface UpdateNoteScreenProps {
+  route: RouteProp<RootStackParamList, "UpdateNote">;
 }
 
-const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
+const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
   const dispatch = useAppDispatch();
-  const userId = route.params?.userId;
+  const note = route.params?.note;
   const navigation = useNavigation();
   const { groups } = useSelector((state: RootState) => state.group);
+  const { user } = useSelector((state: RootState) => state.auth);
 
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(note.groupId || null);
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>(note.images || []);
   const [loading, setLoading] = useState(false);
 
   const selectedGroupName =
@@ -45,8 +45,8 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
       : groups.find((g) => g.id === selectedGroupId)?.name || "Không rõ";
 
   const initialValues = {
-    title: "",
-    content: "",
+    title: note.title || "",
+    content: note.content || "",
   };
 
   const handlePickImage = async () => {
@@ -70,24 +70,28 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   };
 
   const handleSubmit = async (values: { title: string; content: string }) => {
+    if (!user) {
+      Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này.");
+      return;
+    }
     try {
       setLoading(true);
 
-      await createNote(userId, {
+      await updateNote(user.uid, note.id, {
         title: values.title,
         content: values.content,
         images,
         groupId: selectedGroupId,
       });
 
-
-      dispatch(fetchNotes({ userId: userId }));
-
-      Alert.alert("Thành công", "Đã tạo ghi chú!");
-      navigation.goBack();
+      Alert.alert("Thành công", "Đã chỉnh sửa ghi chú!");
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Main" }],
+      });
     } catch (error) {
       console.log(error);
-      Alert.alert("Lỗi", "Không thể tạo ghi chú.");
+      Alert.alert("Lỗi", "Không thể chỉnh sửa ghi chú.");
     } finally {
       setLoading(false);
     }
@@ -101,7 +105,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         
 
-      <Text style={styles.title}>Tạo ghi chú</Text>
+      <Text style={styles.title}>Chỉnh sửa ghi chú</Text>
 
       <Formik
         initialValues={initialValues}
@@ -323,4 +327,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateNoteScreen;
+export default UpdateNoteScreen;

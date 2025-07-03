@@ -1,23 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
-import { useSelector } from 'react-redux';
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import React from "react";
+import { useSelector } from "react-redux";
 import CustomBottomTab, {
   TabBarProps,
 } from "../components/BottomBar/CustomBottomBar";
-import { RootState } from '../redux/rootReducer';
-import LoginScreen from '../screens/Auth/LoginScreen';
-import SignUpScreen from '../screens/Auth/SignUpScreen';
+import { RootState } from "../redux/rootReducer";
+import LoginScreen from "../screens/Auth/LoginScreen";
+import SignUpScreen from "../screens/Auth/SignUpScreen";
 import CreateGroup from "../screens/Group/CreateGroup";
 import HomeScreen from "../screens/Home/HomeScreen";
 import CreateNote from "../screens/Note/CreateNote";
 import NoteDetailScreen from "../screens/Note/NoteDetailScreen";
+import UpdateNoteScreen from "../screens/Note/UpdateNote";
 import ProfileScreen from "../screens/Profile/ProfileScreen";
 import { RootStackParamList } from "./types/navigationTypes";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-
 
 const userTabBarProps: TabBarProps[] = [
   {
@@ -55,6 +55,7 @@ const RootNavigator = () => {
             <Stack.Screen name="CreateNote" component={CreateNote} />
             <Stack.Screen name="NoteDetail" component={NoteDetailScreen} />
 
+            <Stack.Screen name="UpdateNote" component={UpdateNoteScreen} />
           </>
         ) : (
           <>

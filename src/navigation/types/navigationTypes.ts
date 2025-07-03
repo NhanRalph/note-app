@@ -10,6 +10,7 @@ export type RootStackParamList = {
   CreateGroup: { userId: string };
   CreateNote: { userId: string };
   NoteDetail: { note: NoteType };
+  UpdateNote: { note: NoteType };
 };
 
 export type BottomTabParamList = {
