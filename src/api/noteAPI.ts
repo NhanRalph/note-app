@@ -16,7 +16,9 @@ export interface NoteType {
 
 export const getNotes = async (
   userId: string,
+  pageSize: number,
   groupId?: string,
+  lastDoc?: FirebaseFirestoreTypes.DocumentSnapshot,
   keyword?: string
 ) => {
   let query = firestore()
@@ -24,7 +26,12 @@ export const getNotes = async (
     .doc(userId)
     .collection("notes")
     .orderBy("pinned", "desc")
-    .orderBy("updatedAt", "desc");
+    .orderBy("updatedAt", "desc")
+    .limit(pageSize);
+
+  if (lastDoc) {
+    query = query.startAfter(lastDoc);
+  }
 
   if (groupId) {
     query = query.where("groupId", "==", groupId);
@@ -59,7 +66,9 @@ export const getNotes = async (
     );
   }
 
-  return notes;
+  const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+
+  return { notes, lastVisible };
 };
 
 export const createNote = async (
@@ -132,14 +141,23 @@ export const toggleLockNote = async (
   });
 };
 
-// Get pinned notes
-export const getPinnedNotes = async (userId: string, keyword?: string) => {
+export const getPinnedNotes = async (
+  userId: string,
+  pageSize: number,
+  lastDoc?: FirebaseFirestoreTypes.DocumentSnapshot,
+  keyword?: string
+) => {
   let query = firestore()
     .collection("users")
     .doc(userId)
     .collection("notes")
     .where("pinned", "==", true)
-    .orderBy("updatedAt", "desc");
+    .orderBy("updatedAt", "desc")
+    .limit(pageSize);
+
+  if (lastDoc) {
+    query = query.startAfter(lastDoc);
+  }
 
   const snapshot = await query.get();
 
@@ -170,45 +188,7 @@ export const getPinnedNotes = async (userId: string, keyword?: string) => {
     );
   }
 
-  return notes;
-};
+  const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
 
-//pagination
-export const getNotesPaginate = async (
-  userId: string,
-  limitCount = 10,
-  lastDoc?: FirebaseFirestoreTypes.DocumentSnapshot
-) => {
-  let query = firestore()
-    .collection("users")
-    .doc(userId)
-    .collection("notes")
-    .orderBy("createdAt", "desc")
-    .limit(limitCount);
-
-  if (lastDoc) {
-    query = query.startAfter(lastDoc);
-  }
-
-  const snapshot = await query.get();
-
-  return {
-    notes: snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        title: data.title,
-        content: data.content,
-        images: data.images || [],
-        groupId: data.groupId || null,
-        locked: !!data.locked,
-        pinned: !!data.pinned,
-        createdAt:
-          data.createdAt?.toDate().toISOString() || new Date().toISOString(),
-        updatedAt:
-          data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
-      };
-    }),
-    lastDoc: snapshot.docs[snapshot.docs.length - 1],
-  };
+  return { notes, lastVisible };
 };

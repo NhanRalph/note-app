@@ -8,6 +8,7 @@ import Colors from "@/src/constants/Colors";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootState } from "@/src/redux/rootReducer";
 import { Ionicons } from "@expo/vector-icons";
+import { useRef } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import { useSelector } from "react-redux";
@@ -15,10 +16,16 @@ import { useSelector } from "react-redux";
 type Props = {
   note: NoteType;
   viewMode: "list" | "grid";
+  changeFlag: () => void;
   onLongPressNote?: () => void;
 };
 
-export default function NoteItem({ note, viewMode, onLongPressNote }: Props) {
+export default function NoteItem({
+  note,
+  viewMode,
+  changeFlag,
+  onLongPressNote,
+}: Props) {
   const navigation = useNavigation();
   const { user } = useSelector((state: RootState) => state.auth);
   // Handle note click
@@ -26,6 +33,7 @@ export default function NoteItem({ note, viewMode, onLongPressNote }: Props) {
     // Navigate to note detail screen
     navigation.navigate("NoteDetail", { note });
   };
+  const swipeableRef = useRef<any>(null);
 
   const handlePinNote = (note: NoteType) => {
     Alert.alert("Ghim ghi chú", "Bạn có muốn ghim ghi chú này không?", [
@@ -37,10 +45,8 @@ export default function NoteItem({ note, viewMode, onLongPressNote }: Props) {
             // Call pin API here
             await togglePinNote(user!.uid, note.id, !note.pinned);
             Alert.alert("Thành công", "Đã ghim ghi chú!");
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Main" }],
-            });
+            changeFlag();
+            swipeableRef.current?.close();
           } catch (error) {
             console.error("Error pinning note:", error);
             Alert.alert("Lỗi", "Không thể ghim ghi chú. Vui lòng thử lại sau.");
@@ -65,10 +71,8 @@ export default function NoteItem({ note, viewMode, onLongPressNote }: Props) {
             // Call delete API here
             await deleteNote(user!.uid, note.id);
             Alert.alert("Thành công", "Đã xoá ghi chú!");
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Main" }],
-            });
+            changeFlag();
+            swipeableRef.current?.close();
           } catch (error) {
             console.error("Error deleting note:", error);
             Alert.alert("Lỗi", "Không thể xoá ghi chú. Vui lòng thử lại sau.");
@@ -97,10 +101,8 @@ export default function NoteItem({ note, viewMode, onLongPressNote }: Props) {
                   "Thành công",
                   note.locked ? "Đã mở khoá ghi chú!" : "Đã khoá ghi chú!"
                 );
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: "Main" }],
-                });
+                changeFlag();
+                swipeableRef.current?.close();
               } catch (error) {
                 console.error("Error locking/unlocking note:", error);
                 Alert.alert(
@@ -147,7 +149,7 @@ export default function NoteItem({ note, viewMode, onLongPressNote }: Props) {
       </View>
     );
     return (
-      <Swipeable renderRightActions={renderRightActions}>
+      <Swipeable ref={swipeableRef} renderRightActions={renderRightActions}>
         <TouchableOpacity
           style={[styles.container]}
           onPress={handleNoteClick}

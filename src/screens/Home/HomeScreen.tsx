@@ -17,6 +17,7 @@ import {
   getGroupsStore,
 } from "@/src/redux/slices/groupSlices";
 import { Ionicons } from "@expo/vector-icons";
+import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -33,27 +34,32 @@ import { useSelector } from "react-redux";
 
 export default function HomeScreen() {
   //use state
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>("all");
   const [selectedNoteActionId, setSelectedNoteActionId] = useState<
     string | null
   >(null);
   const [selectedNote, setSelectedNote] = useState<NoteType | null>(null);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [debouncedKeyword, setDebouncedKeyword] = useState<string>("");
-
+  const PAGE_SIZE = 10;
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastDoc, setLastDoc] = useState<
+    FirebaseFirestoreTypes.DocumentSnapshot | undefined
+  >(undefined);
+  const [hasMore, setHasMore] = useState(true);
 
   const [notes, setNotes] = useState<NoteType[]>([]);
   const [selectedGroupActionId, setSelectedGroupActionId] = useState<
     string | null
   >(null);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [flag, setFlag] = useState(false);
 
   // Redux hooks
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const { groups, loading, error } = useSelector(
-    (state: RootState) => state.group
-  );
+  const { groups, error } = useSelector((state: RootState) => state.group);
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -62,78 +68,151 @@ export default function HomeScreen() {
     userId: string;
     groupId?: string;
     keyword?: string;
+    reset?: boolean;
+    isLoadMore?: boolean;
   }) => {
     try {
+      if (loading || loadingMore || (!hasMore && params.isLoadMore)) return;
+
+      if (params.isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
       const response = await getNotes(
         params.userId,
+        PAGE_SIZE,
         params.groupId,
+        params.reset ? undefined : lastDoc,
         params.keyword
       );
-      if (!response || !Array.isArray(response)) {
-        throw new Error("Invalid response from API");
+
+      if (params.reset) {
+        setNotes(response.notes);
+      } else {
+        setNotes((prev) => [...prev, ...response.notes]);
       }
-      setNotes(response);
-      return response;
+
+      setLastDoc(response.lastVisible);
+      setHasMore(response.notes.length >= PAGE_SIZE);
     } catch (error) {
       console.error("Error fetching notes:", error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  const fetchPinnedNotes = async (userId: string, keyword?: string) => {
+  const fetchAllNotes = async (params: {
+    userId: string;
+    keyword?: string;
+    reset?: boolean;
+    isLoadMore?: boolean;
+  }) => {
     try {
-      // Call your API to fetch pinned notes
-      const response = await getPinnedNotes(userId, keyword);
-      if (!response || !Array.isArray(response)) {
-        throw new Error("Invalid response from API");
+      if (loading || loadingMore || (!hasMore && params.isLoadMore)) return;
+
+      if (params.isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
       }
-      setNotes(response);
-      return response;
+
+      const response = await getNotes(
+        params.userId,
+        PAGE_SIZE,
+        undefined,
+        params.reset ? undefined : lastDoc,
+        params.keyword
+      );
+
+      if (params.reset) {
+        setNotes(response.notes);
+      } else {
+        setNotes((prev) => [...prev, ...response.notes]);
+      }
+
+      setLastDoc(response.lastVisible);
+      setHasMore(response.notes.length >= PAGE_SIZE);
     } catch (error) {
-      console.error("Error fetching pinned notes:", error);
-      // Handle error appropriately, e.g., show an alert or log the error
+      console.error("Error fetching notes:", error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const fetchPinnedNotes = async (params: {
+    userId: string;
+    keyword?: string;
+    reset?: boolean;
+    isLoadMore?: boolean;
+  }) => {
+    try {
+      if (loading || loadingMore || (!hasMore && params.isLoadMore)) return;
+
+      if (params.isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      const response = await getPinnedNotes(
+        params.userId,
+        PAGE_SIZE,
+        params.reset ? undefined : lastDoc,
+        params.keyword
+      );
+
+      if (params.reset) {
+        setNotes(response.notes);
+      } else {
+        setNotes((prev) => [...prev, ...response.notes]);
+      }
+
+      setLastDoc(response.lastVisible);
+      setHasMore(response.notes.length >= PAGE_SIZE);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
     if (user) {
       dispatch(getGroupsStore({ userId: user.uid }));
-      fetchNotes({ userId: user.uid });
+      // fetchNotes({ userId: user.uid, reset: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Fetch notes when selectedGroupId changes
   useEffect(() => {
-    if (user) {
-      if (selectedGroupId === "all" || selectedGroupId === null) {
-        fetchNotes({ userId: user.uid, keyword: debouncedKeyword });
-      } else if (selectedGroupId === "pinned") {
-        fetchPinnedNotes(user.uid, debouncedKeyword);
-      } else {
-        fetchNotes({
-          userId: user.uid,
-          groupId: selectedGroupId,
-          keyword: debouncedKeyword,
-        });
-      }
+    if (!user) return;
+
+    if (selectedGroupId === "all") {
+      fetchAllNotes({
+        userId: user.uid,
+        keyword: debouncedKeyword,
+        reset: true,
+      });
+    } else if (selectedGroupId === "pinned") {
+      fetchPinnedNotes({
+        userId: user.uid,
+        keyword: debouncedKeyword,
+        reset: true,
+      });
+    } else {
+      fetchNotes({
+        userId: user.uid,
+        groupId: selectedGroupId,
+        keyword: debouncedKeyword,
+        reset: true,
+      });
     }
-  }, [selectedGroupId, user, isDeleted, debouncedKeyword]);
-
-  // Fetch notes when groups change (e.g., after create/delete group)
-  useEffect(() => {
-    if (user) {
-      fetchNotes({ userId: user.uid });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDeleted]);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedKeyword(searchKeyword);
-    }, 400); // debounceTime 400ms
-
-    return () => clearTimeout(handler);
-  }, [searchKeyword]);
+  }, [selectedGroupId, debouncedKeyword, flag]);
 
   const createGroup = () => {
     if (!user) {
@@ -201,11 +280,9 @@ export default function HomeScreen() {
             // Call pin API here
             await togglePinNote(user!.uid, note.id, !note.pinned);
             Alert.alert("Thành công", "Đã ghim ghi chú!");
-
-            fetchNotes({
-              userId: user!.uid,
-              groupId: selectedGroupId || undefined,
-            });
+            setFlag(!flag);
+            setSelectedNoteActionId(null);
+            setSelectedNote(null);
           } catch (error) {
             console.error("Error pinning note:", error);
             Alert.alert("Lỗi", "Không thể ghim ghi chú. Vui lòng thử lại sau.");
@@ -230,10 +307,9 @@ export default function HomeScreen() {
             // Call delete API here
             await deleteNote(user!.uid, note.id);
             Alert.alert("Thành công", "Đã xoá ghi chú!");
-            fetchNotes({
-              userId: user!.uid,
-              groupId: selectedGroupId || undefined,
-            });
+            setFlag(!flag);
+            setSelectedNoteActionId(null);
+            setSelectedNote(null);
           } catch (error) {
             console.error("Error deleting note:", error);
             Alert.alert("Lỗi", "Không thể xoá ghi chú. Vui lòng thử lại sau.");
@@ -262,10 +338,9 @@ export default function HomeScreen() {
                   "Thành công",
                   note.locked ? "Đã mở khoá ghi chú!" : "Đã khoá ghi chú!"
                 );
-                fetchNotes({
-                  userId: user!.uid,
-                  groupId: selectedGroupId || undefined,
-                });
+                setFlag(!flag);
+                setSelectedNoteActionId(null);
+                setSelectedNote(null);
               } catch (error) {
                 console.error("Error locking/unlocking note:", error);
                 Alert.alert(
@@ -278,6 +353,10 @@ export default function HomeScreen() {
         },
       ]
     );
+  };
+
+  const handleChangeFlag = () => {
+    setFlag(!flag);
   };
 
   return (
@@ -354,6 +433,7 @@ export default function HomeScreen() {
           <NoteItem
             note={item}
             viewMode={viewMode}
+            changeFlag={handleChangeFlag}
             onLongPressNote={() => {
               setSelectedNoteActionId(item.id);
               setSelectedNote(item);
@@ -361,6 +441,38 @@ export default function HomeScreen() {
           />
         )}
         showsVerticalScrollIndicator={false}
+        onEndReached={() => {
+          if (!user || loadingMore || !hasMore) return;
+
+          if (selectedGroupId === "all") {
+            fetchAllNotes({
+              userId: user.uid,
+              keyword: debouncedKeyword,
+              isLoadMore: true,
+            });
+          } else if (selectedGroupId === "pinned") {
+            fetchPinnedNotes({
+              userId: user.uid,
+              keyword: debouncedKeyword,
+              isLoadMore: true,
+            });
+          } else {
+            fetchNotes({
+              userId: user.uid,
+              groupId: selectedGroupId,
+              keyword: debouncedKeyword,
+              isLoadMore: true,
+            });
+          }
+        }}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={{ padding: 16, alignItems: "center" }}>
+              <Text style={{ color: "#888" }}>Đang tải thêm...</Text>
+            </View>
+          ) : null
+        }
       />
 
       {/* Nút thêm Note */}
