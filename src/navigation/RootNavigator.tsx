@@ -10,6 +10,7 @@ import { RootState } from "../redux/rootReducer";
 import LoginScreen from "../screens/Auth/LoginScreen";
 import SignUpScreen from "../screens/Auth/SignUpScreen";
 import CreateGroup from "../screens/Group/CreateGroup";
+import UpdateGroupScreen from "../screens/Group/UpdateGroup";
 import HomeScreen from "../screens/Home/HomeScreen";
 import CreateNote from "../screens/Note/CreateNote";
 import NoteDetailScreen from "../screens/Note/NoteDetailScreen";
@@ -56,6 +57,7 @@ const RootNavigator = () => {
             <Stack.Screen name="NoteDetail" component={NoteDetailScreen} />
 
             <Stack.Screen name="UpdateNote" component={UpdateNoteScreen} />
+            <Stack.Screen name="UpdateGroup" component={UpdateGroupScreen} />
           </>
         ) : (
           <>

@@ -1,3 +1,4 @@
+import { deleteNote, toggleLockNote } from "@/src/api/noteAPI";
 import Colors from "@/src/constants/Colors";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
@@ -21,6 +22,7 @@ export default function NoteDetailScreen() {
   const route = useRoute<NoteDetailRouteProp>();
   const navigation = useNavigation();
   const { groups } = useSelector((state: RootState) => state.group);
+  const { user } = useSelector((state: RootState) => state.auth);
   const { note } = route.params;
   const selectedGroupName =
     note.groupId === null
@@ -37,8 +39,19 @@ export default function NoteDetailScreen() {
       {
         text: "Xoá",
         style: "destructive",
-        onPress: () => {
-          /* Call delete API here */
+        onPress: async () => {
+          try {
+            // Call delete API here
+            await deleteNote(user!.uid, note.id);
+            Alert.alert("Thành công", "Đã xoá ghi chú!");
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Main" }],
+            });
+          } catch (error) {
+            console.error("Error deleting note:", error);
+            Alert.alert("Lỗi", "Không thể xoá ghi chú. Vui lòng thử lại sau.");
+          }
         },
       },
     ]);
@@ -54,8 +67,27 @@ export default function NoteDetailScreen() {
         { text: "Huỷ", style: "cancel" },
         {
           text: note.locked ? "Mở khoá" : "Khoá",
-          onPress: () => {
-            /* Call lock/unlock API here */
+          onPress: async () => {
+            {
+              try {
+                // Call lock/unlock API here
+                await toggleLockNote(user!.uid, note.id, !note.locked);
+                Alert.alert(
+                  "Thành công",
+                  note.locked ? "Đã mở khoá ghi chú!" : "Đã khoá ghi chú!"
+                );
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Main" }],
+                });
+              } catch (error) {
+                console.error("Error locking/unlocking note:", error);
+                Alert.alert(
+                  "Lỗi",
+                  "Không thể thực hiện thao tác. Vui lòng thử lại sau."
+                );
+              }
+            }
           },
         },
       ]
@@ -76,10 +108,7 @@ export default function NoteDetailScreen() {
         {/* Title */}
         <Text style={styles.title}>{note.title}</Text>
 
-        {/* Group */}
-        {note.groupId && (
-          <Text style={styles.groupText}>Nhóm: {selectedGroupName}</Text>
-        )}
+        <Text style={styles.groupText}>Nhóm: {selectedGroupName}</Text>
 
         {/* Icons */}
         <View style={styles.iconRow}>
@@ -122,15 +151,19 @@ export default function NoteDetailScreen() {
 
       {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>
-        <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
-          <Text style={styles.actionButtonText}>Chỉnh sửa</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: "#e74c3c" }]}
-          onPress={handleDelete}
-        >
-          <Text style={styles.actionButtonText}>Xoá</Text>
-        </TouchableOpacity>
+        {!note.locked && (
+          <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
+            <Text style={styles.actionButtonText}>Chỉnh sửa</Text>
+          </TouchableOpacity>
+        )}
+        {!note.locked && (
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: "#e74c3c" }]}
+            onPress={handleDelete}
+          >
+            <Text style={styles.actionButtonText}>Xoá</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: "#6366f1" }]}
           onPress={handleLock}

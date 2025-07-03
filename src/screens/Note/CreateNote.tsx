@@ -84,7 +84,10 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
       dispatch(fetchNotes({ userId: userId }));
 
       Alert.alert("Thành công", "Đã tạo ghi chú!");
-      navigation.goBack();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Main" }],
+      });
     } catch (error) {
       console.log(error);
       Alert.alert("Lỗi", "Không thể tạo ghi chú.");

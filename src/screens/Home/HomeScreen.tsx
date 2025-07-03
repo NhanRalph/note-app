@@ -1,11 +1,21 @@
-import { getNotes, NoteType } from "@/src/api/noteAPI";
+import {
+  deleteNote,
+  getNotes,
+  getPinnedNotes,
+  NoteType,
+  toggleLockNote,
+  togglePinNote,
+} from "@/src/api/noteAPI";
 import GroupItem from "@/src/components/GroupItem/GroupItem";
 import NoteItem from "@/src/components/NoteItem/NoteItem";
 import Colors from "@/src/constants/Colors";
 import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootState } from "@/src/redux/rootReducer";
-import { deleteGroupStore, getGroupsStore } from "@/src/redux/slices/groupSlices";
+import {
+  deleteGroupStore,
+  getGroupsStore,
+} from "@/src/redux/slices/groupSlices";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
@@ -15,6 +25,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -23,6 +34,14 @@ import { useSelector } from "react-redux";
 export default function HomeScreen() {
   //use state
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedNoteActionId, setSelectedNoteActionId] = useState<
+    string | null
+  >(null);
+  const [selectedNote, setSelectedNote] = useState<NoteType | null>(null);
+  const [searchKeyword, setSearchKeyword] = useState<string>("");
+  const [debouncedKeyword, setDebouncedKeyword] = useState<string>("");
+
+
   const [notes, setNotes] = useState<NoteType[]>([]);
   const [selectedGroupActionId, setSelectedGroupActionId] = useState<
     string | null
@@ -39,22 +58,42 @@ export default function HomeScreen() {
 
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
-  const fetchNotes = async (params: { userId: string; groupId?: string }) => {
+  const fetchNotes = async (params: {
+    userId: string;
+    groupId?: string;
+    keyword?: string;
+  }) => {
     try {
-      // Call your API to fetch notes based on userId and groupId
-      // For example:
-      const response = await getNotes(params.userId, params.groupId);
+      const response = await getNotes(
+        params.userId,
+        params.groupId,
+        params.keyword
+      );
       if (!response || !Array.isArray(response)) {
         throw new Error("Invalid response from API");
       }
-      // Update the notes state with the fetched notes
       setNotes(response);
       return response;
     } catch (error) {
       console.error("Error fetching notes:", error);
+    }
+  };
+
+  const fetchPinnedNotes = async (userId: string, keyword?: string) => {
+    try {
+      // Call your API to fetch pinned notes
+      const response = await getPinnedNotes(userId, keyword);
+      if (!response || !Array.isArray(response)) {
+        throw new Error("Invalid response from API");
+      }
+      setNotes(response);
+      return response;
+    } catch (error) {
+      console.error("Error fetching pinned notes:", error);
       // Handle error appropriately, e.g., show an alert or log the error
     }
-  };// Only fetch groups and notes when user changes
+  };
+
   useEffect(() => {
     if (user) {
       dispatch(getGroupsStore({ userId: user.uid }));
@@ -65,15 +104,20 @@ export default function HomeScreen() {
 
   // Fetch notes when selectedGroupId changes
   useEffect(() => {
-    if (user && selectedGroupId !== null) {
-      if (selectedGroupId !== "all") {
-        fetchNotes({ userId: user.uid, groupId: selectedGroupId });
+    if (user) {
+      if (selectedGroupId === "all" || selectedGroupId === null) {
+        fetchNotes({ userId: user.uid, keyword: debouncedKeyword });
+      } else if (selectedGroupId === "pinned") {
+        fetchPinnedNotes(user.uid, debouncedKeyword);
       } else {
-        fetchNotes({ userId: user.uid });
+        fetchNotes({
+          userId: user.uid,
+          groupId: selectedGroupId,
+          keyword: debouncedKeyword,
+        });
       }
     }
-     
-  }, [selectedGroupId, user]);
+  }, [selectedGroupId, user, isDeleted, debouncedKeyword]);
 
   // Fetch notes when groups change (e.g., after create/delete group)
   useEffect(() => {
@@ -82,6 +126,14 @@ export default function HomeScreen() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDeleted]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedKeyword(searchKeyword);
+    }, 400); // debounceTime 400ms
+
+    return () => clearTimeout(handler);
+  }, [searchKeyword]);
 
   const createGroup = () => {
     if (!user) {
@@ -112,6 +164,11 @@ export default function HomeScreen() {
   const handleUpdateGroup = (groupId: string) => {
     // Implement your update logic here
     alert(`Update group ${groupId}`);
+    navigation.navigate("UpdateGroup", {
+      userId: user!.uid,
+      groupId: groupId,
+      name: groups.find((g) => g.id === groupId)?.name || "",
+    });
     handleCloseActions();
   };
 
@@ -125,13 +182,102 @@ export default function HomeScreen() {
       {
         text: "Xoá",
         style: "destructive",
-        onPress: () =>{
+        onPress: () => {
           dispatch(deleteGroupStore({ userId: user!.uid, groupId }));
           handleCloseActions();
           setIsDeleted(!isDeleted);
         },
       },
     ]);
+  };
+
+  const handlePinNote = (note: NoteType) => {
+    Alert.alert("Ghim ghi chú", "Bạn có muốn ghim ghi chú này không?", [
+      { text: "Huỷ", style: "cancel" },
+      {
+        text: "Ghim",
+        onPress: async () => {
+          try {
+            // Call pin API here
+            await togglePinNote(user!.uid, note.id, !note.pinned);
+            Alert.alert("Thành công", "Đã ghim ghi chú!");
+
+            fetchNotes({
+              userId: user!.uid,
+              groupId: selectedGroupId || undefined,
+            });
+          } catch (error) {
+            console.error("Error pinning note:", error);
+            Alert.alert("Lỗi", "Không thể ghim ghi chú. Vui lòng thử lại sau.");
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleEditNote = (note: NoteType) => {
+    navigation.navigate("UpdateNote", { note });
+  };
+
+  const handleDeleteNote = (note: NoteType) => {
+    Alert.alert("Xoá ghi chú", "Bạn có chắc chắn muốn xoá ghi chú này không?", [
+      { text: "Huỷ", style: "cancel" },
+      {
+        text: "Xoá",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            // Call delete API here
+            await deleteNote(user!.uid, note.id);
+            Alert.alert("Thành công", "Đã xoá ghi chú!");
+            fetchNotes({
+              userId: user!.uid,
+              groupId: selectedGroupId || undefined,
+            });
+          } catch (error) {
+            console.error("Error deleting note:", error);
+            Alert.alert("Lỗi", "Không thể xoá ghi chú. Vui lòng thử lại sau.");
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleLockNote = (note: NoteType) => {
+    Alert.alert(
+      note.locked ? "Mở khoá ghi chú" : "Khoá ghi chú",
+      note.locked
+        ? "Bạn có muốn mở khoá ghi chú này không?"
+        : "Bạn có muốn khoá ghi chú này không?",
+      [
+        { text: "Huỷ", style: "cancel" },
+        {
+          text: note.locked ? "Mở khoá" : "Khoá",
+          onPress: async () => {
+            {
+              try {
+                // Call lock/unlock API here
+                await toggleLockNote(user!.uid, note.id, !note.locked);
+                Alert.alert(
+                  "Thành công",
+                  note.locked ? "Đã mở khoá ghi chú!" : "Đã khoá ghi chú!"
+                );
+                fetchNotes({
+                  userId: user!.uid,
+                  groupId: selectedGroupId || undefined,
+                });
+              } catch (error) {
+                console.error("Error locking/unlocking note:", error);
+                Alert.alert(
+                  "Lỗi",
+                  "Không thể thực hiện thao tác. Vui lòng thử lại sau."
+                );
+              }
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -150,6 +296,21 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.searchContainer}>
+        <Ionicons
+          name="search"
+          size={20}
+          color="#888"
+          style={{ marginRight: 8 }}
+        />
+        <TextInput
+          placeholder="Tìm kiếm ghi chú..."
+          style={styles.searchInput}
+          value={searchKeyword}
+          onChangeText={(text) => setSearchKeyword(text)}
+        />
+      </View>
+
       <View style={{ flexDirection: "row", marginVertical: 12 }}>
         <ScrollView
           horizontal
@@ -159,25 +320,27 @@ export default function HomeScreen() {
           <TouchableOpacity style={styles.addGroupBtn} onPress={createGroup}>
             <Ionicons name="add" size={20} color={Colors.primary600} />
           </TouchableOpacity>
-          {[{ id: "all", name: "Tất cả", createdAt: "" }, ...groups].map(
-            (group) => (
-              <View key={group.id} style={{ position: "relative" }}>
-                <TouchableOpacity
-                  onPress={() => setSelectedGroupId(group.id)}
-                  onLongPress={() => handleGroupLongPress(group.id)}
-                  delayLongPress={500}
-                  style={[
-                    styles.listGroupItem,
-                    selectedGroupId === group.id && {
-                      backgroundColor: Colors.primary200,
-                    },
-                  ]}
-                >
-                  <GroupItem group={group} />
-                </TouchableOpacity>
-              </View>
-            )
-          )}
+          {[
+            { id: "all", name: "Tất cả", createdAt: "" },
+            { id: "pinned", name: "Ghim", createdAt: "" },
+            ...groups,
+          ].map((group) => (
+            <View key={group.id} style={{ position: "relative" }}>
+              <TouchableOpacity
+                onPress={() => setSelectedGroupId(group.id)}
+                onLongPress={() => handleGroupLongPress(group.id)}
+                delayLongPress={300}
+                style={[
+                  styles.listGroupItem,
+                  selectedGroupId === group.id && {
+                    backgroundColor: Colors.primary200,
+                  },
+                ]}
+              >
+                <GroupItem group={group} />
+              </TouchableOpacity>
+            </View>
+          ))}
         </ScrollView>
       </View>
 
@@ -187,7 +350,16 @@ export default function HomeScreen() {
         key={viewMode}
         numColumns={viewMode === "grid" ? 2 : 1}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <NoteItem note={item} viewMode={viewMode} />}
+        renderItem={({ item }) => (
+          <NoteItem
+            note={item}
+            viewMode={viewMode}
+            onLongPressNote={() => {
+              setSelectedNoteActionId(item.id);
+              setSelectedNote(item);
+            }}
+          />
+        )}
         showsVerticalScrollIndicator={false}
       />
 
@@ -212,13 +384,13 @@ export default function HomeScreen() {
               style={styles.actionBtn}
               onPress={() => handleUpdateGroup(selectedGroupActionId!)}
             >
-              <Text style={styles.actionText}>Update</Text>
+              <Text style={styles.actionText}>Chỉnh sửa</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionBtn}
               onPress={() => handleDeleteGroup(selectedGroupActionId!)}
             >
-              <Text style={styles.actionText}>Delete</Text>
+              <Text style={styles.actionText}>Xoá</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.closeActionBtn}
@@ -229,6 +401,63 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {selectedNote && (
+        <Modal
+          visible={!!selectedNoteActionId}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSelectedNoteActionId(null)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setSelectedNoteActionId(null)}
+          >
+            <View style={styles.groupActionsModal}>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => handlePinNote(selectedNote)}
+              >
+                <Text style={styles.actionText}>Ghim</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => handleLockNote(selectedNote)}
+              >
+                <Text style={styles.actionText}>
+                  {selectedNote.locked ? "Mở khoá" : "Khoá"}
+                </Text>
+              </TouchableOpacity>
+
+              {!selectedNote.locked && (
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={() => handleEditNote(selectedNote)}
+                >
+                  <Text style={styles.actionText}>Chỉnh sửa</Text>
+                </TouchableOpacity>
+              )}
+
+              {!selectedNote.locked && (
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={() => handleDeleteNote(selectedNote)}
+                >
+                  <Text style={styles.actionText}>Xoá</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.closeActionBtn}
+                onPress={() => setSelectedNoteActionId(null)}
+              >
+                <Ionicons name="close" size={18} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -253,7 +482,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   addGroupBtn: {
-    padding: 12,
+    padding: 8,
     backgroundColor: Colors.primary100,
     borderRadius: 8,
     marginRight: 8,
@@ -267,8 +496,8 @@ const styles = StyleSheet.create({
     borderRadius: 32,
   },
   listGroupItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
     backgroundColor: Colors.primary100,
     borderRadius: 8,
     marginRight: 8,
@@ -327,5 +556,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: "72%",
     alignItems: "center",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
   },
 });

@@ -1,5 +1,6 @@
 import React from 'react';
 import { SafeAreaView, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
 import Colors from './src/constants/Colors';
 import RootNavigator from './src/navigation';
@@ -7,11 +8,14 @@ import store from './src/redux';
 
 const App = () => {
   return (
-    <SafeAreaView style={styles.container}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
-        <RootNavigator />
+        {/* Bạn có thể bọc SafeAreaView ở đây nếu thực sự cần */}
+        <SafeAreaView style={styles.container}>
+          <RootNavigator />
+        </SafeAreaView>
       </Provider>
-    </SafeAreaView>
+    </GestureHandlerRootView>
   );
 };
 
@@ -19,7 +23,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingVertical: 20,
-    backgroundColor: Colors.background, // Quy chuẩn màu nền toàn app
+    backgroundColor: Colors.background,
   },
 });
 

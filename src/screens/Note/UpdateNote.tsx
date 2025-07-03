@@ -141,7 +141,8 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
               onBlur={handleBlur("content")}
               value={values.content}
               multiline
-              numberOfLines={4}
+              numberOfLines={10}
+              textAlignVertical="top"
             />
             {touched.content && errors.content && (
               <Text style={styles.error}>{errors.content}</Text>
@@ -210,7 +211,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
             </View>
 
             <Button
-              title="Tạo ghi chú"
+              title="Chỉnh sửa"
               size="large"
               color={Colors.primary600}
               onPress={handleSubmit}
@@ -255,8 +256,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   textArea: {
-    height: 100,
     textAlignVertical: "top",
+    minHeight: 120, 
+    maxHeight: 320,
   },
   error: {
     color: "red",

@@ -14,12 +14,17 @@ export interface NoteType {
   updatedAt: string;
 }
 
-export const getNotes = async (userId: string, groupId?: string) => {
+export const getNotes = async (
+  userId: string,
+  groupId?: string,
+  keyword?: string
+) => {
   let query = firestore()
     .collection("users")
     .doc(userId)
     .collection("notes")
-    .orderBy("createdAt", "desc");
+    .orderBy("pinned", "desc")
+    .orderBy("updatedAt", "desc");
 
   if (groupId) {
     query = query.where("groupId", "==", groupId);
@@ -27,7 +32,7 @@ export const getNotes = async (userId: string, groupId?: string) => {
 
   const snapshot = await query.get();
 
-  return snapshot.docs.map((doc) => {
+  let notes = snapshot.docs.map((doc) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -43,6 +48,18 @@ export const getNotes = async (userId: string, groupId?: string) => {
         data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
     };
   });
+
+  // Lọc theo keyword nếu có
+  if (keyword) {
+    const lowerKeyword = keyword.toLowerCase();
+    notes = notes.filter(
+      (note) =>
+        note.title?.toLowerCase().includes(lowerKeyword) ||
+        note.content?.toLowerCase().includes(lowerKeyword)
+    );
+  }
+
+  return notes;
 };
 
 export const createNote = async (
@@ -113,6 +130,47 @@ export const toggleLockNote = async (
     locked,
     updatedAt: firestore.FieldValue.serverTimestamp(),
   });
+};
+
+// Get pinned notes
+export const getPinnedNotes = async (userId: string, keyword?: string) => {
+  let query = firestore()
+    .collection("users")
+    .doc(userId)
+    .collection("notes")
+    .where("pinned", "==", true)
+    .orderBy("updatedAt", "desc");
+
+  const snapshot = await query.get();
+
+  let notes = snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      title: data.title,
+      content: data.content,
+      images: data.images || [],
+      groupId: data.groupId || null,
+      locked: !!data.locked,
+      pinned: !!data.pinned,
+      createdAt:
+        data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+      updatedAt:
+        data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+    };
+  });
+
+  // Lọc theo keyword nếu có
+  if (keyword) {
+    const lowerKeyword = keyword.toLowerCase();
+    notes = notes.filter(
+      (note) =>
+        note.title?.toLowerCase().includes(lowerKeyword) ||
+        note.content?.toLowerCase().includes(lowerKeyword)
+    );
+  }
+
+  return notes;
 };
 
 //pagination

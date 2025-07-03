@@ -11,6 +11,7 @@ export type RootStackParamList = {
   CreateNote: { userId: string };
   NoteDetail: { note: NoteType };
   UpdateNote: { note: NoteType };
+  UpdateGroup: { userId: string; groupId: string; name: string };
 };
 
 export type BottomTabParamList = {
