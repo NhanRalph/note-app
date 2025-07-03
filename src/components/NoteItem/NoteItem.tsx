@@ -121,13 +121,13 @@ export default function NoteItem({
     const renderRightActions = () => (
       <View style={styles.actionsRow}>
         <TouchableOpacity
-          style={styles.actionBtn}
+          style={[styles.actionBtn, { backgroundColor: "#a855f7" } ]}
           onPress={() => handlePinNote(note)}
         >
           <Ionicons name="bookmark" size={20} color="#fff" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionBtn} onPress={handleLock}>
+        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#4b5563" } ]} onPress={handleLock}>
           {note.locked ? (
             <Ionicons name="lock-open" size={20} color="#fff" />
           ) : (
@@ -136,13 +136,13 @@ export default function NoteItem({
         </TouchableOpacity>
 
         {!note.locked && (
-          <TouchableOpacity style={styles.actionBtn} onPress={handleEdit}>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#4b7bec" } ]} onPress={handleEdit}>
             <Ionicons name="pencil" size={20} color="#fff" />
           </TouchableOpacity>
         )}
 
         {!note.locked && (
-          <TouchableOpacity style={styles.actionBtn} onPress={handleDelete}>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#EF4444" } ]} onPress={handleDelete}>
             <Ionicons name="trash" size={20} color="#fff" />
           </TouchableOpacity>
         )}
@@ -167,7 +167,7 @@ export default function NoteItem({
               {note.locked && (
                 <Ionicons name="lock-closed" size={16} color="gray" />
               )}
-              {note.pinned && <Ionicons name="star" size={16} color="gold" />}
+              {note.pinned && <Ionicons name="bookmark" size={16} color="gold" />}
             </View>
           </View>
           <Text numberOfLines={2} style={styles.content}>

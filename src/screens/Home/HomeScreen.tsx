@@ -515,61 +515,66 @@ export default function HomeScreen() {
       </Modal>
 
       {selectedNote && (
-        <Modal
-          visible={!!selectedNoteActionId}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setSelectedNoteActionId(null)}
-        >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setSelectedNoteActionId(null)}
-          >
-            <View style={styles.groupActionsModal}>
-              <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={() => handlePinNote(selectedNote)}
-              >
-                <Text style={styles.actionText}>Ghim</Text>
-              </TouchableOpacity>
+  <Modal
+    visible={!!selectedNoteActionId}
+    transparent
+    animationType="fade"
+    onRequestClose={() => setSelectedNoteActionId(null)}
+  >
+    <TouchableOpacity
+      style={styles.modalOverlay}
+      activeOpacity={1}
+      onPress={() => setSelectedNoteActionId(null)}
+    >
+      <View style={styles.groupActionsModal}>
+        
+        {/* Ghim */}
+        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#a855f715" } ]} onPress={() => handlePinNote(selectedNote)}>
+        <Text style={[styles.actionText, { color: "#a855f7" }]}>
+            <Ionicons name="bookmark" size={14} color={"#a855f7"} /> Ghim
+          </Text>
+        </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={() => handleLockNote(selectedNote)}
-              >
-                <Text style={styles.actionText}>
-                  {selectedNote.locked ? "Mở khoá" : "Khoá"}
-                </Text>
-              </TouchableOpacity>
+        {/* Khoá / Mở khoá */}
+        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#4b556315" } ]} onPress={() => handleLockNote(selectedNote)}>
+        <Text style={[styles.actionText, { color: "#4b5563" }]}>
+            <Ionicons
+              name={selectedNote.locked ? "lock-open" : "lock-closed"}
+              size={14}
+              color={"#4b5563"}
+              style={{ marginLeft: 8 }}
+            />{" "}
+            {selectedNote.locked ? "Mở khoá" : "Khoá"}
+          </Text>
+        </TouchableOpacity>
 
-              {!selectedNote.locked && (
-                <TouchableOpacity
-                  style={styles.actionBtn}
-                  onPress={() => handleEditNote(selectedNote)}
-                >
-                  <Text style={styles.actionText}>Chỉnh sửa</Text>
-                </TouchableOpacity>
-              )}
-
-              {!selectedNote.locked && (
-                <TouchableOpacity
-                  style={styles.actionBtn}
-                  onPress={() => handleDeleteNote(selectedNote)}
-                >
-                  <Text style={styles.actionText}>Xoá</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={styles.closeActionBtn}
-                onPress={() => setSelectedNoteActionId(null)}
-              >
-                <Ionicons name="close" size={18} color="#fff" />
-              </TouchableOpacity>
-            </View>
+        {/* Chỉnh sửa (chỉ khi chưa khoá) */}
+        {!selectedNote.locked && (
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#4b7bec15" } ]} onPress={() => handleEditNote(selectedNote)}>
+            <Text style={[styles.actionText, { color: "#4b7bec" }]}>
+              <Ionicons name="pencil" size={14} color={"#4b7bec"} /> Chỉnh sửa
+            </Text>
           </TouchableOpacity>
-        </Modal>
-      )}
+        )}
+
+        {/* Xoá (chỉ khi chưa khoá) */}
+        {!selectedNote.locked && (
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#EF444415" } ]} onPress={() => handleDeleteNote(selectedNote)}>
+            <Text style={[styles.actionText, { color: "#EF4444" }]}>
+              <Ionicons name="trash" size={14} color={"#EF4444"} /> Xoá
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Đóng */}
+        <TouchableOpacity style={styles.closeActionBtn} onPress={() => setSelectedNoteActionId(null)}>
+          <Ionicons name="close" size={18} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  </Modal>
+)}
+
     </View>
   );
 }
@@ -648,6 +653,7 @@ const styles = StyleSheet.create({
   actionText: {
     color: Colors.primary600,
     fontWeight: "bold",
+    fontSize: 16,
   },
   closeActionBtn: {
     marginLeft: 8,

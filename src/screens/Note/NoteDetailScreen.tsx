@@ -5,6 +5,7 @@ import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp, useRoute } from "@react-navigation/native";
+import { useState } from "react";
 import {
   Alert,
   Image,
@@ -24,6 +25,8 @@ export default function NoteDetailScreen() {
   const { groups } = useSelector((state: RootState) => state.group);
   const { user } = useSelector((state: RootState) => state.auth);
   const { note } = route.params;
+
+  const [localNote, setLocalNote] = useState(note);
   const selectedGroupName =
     note.groupId === null
       ? "Không thuộc nhóm nào"
@@ -76,10 +79,7 @@ export default function NoteDetailScreen() {
                   "Thành công",
                   note.locked ? "Đã mở khoá ghi chú!" : "Đã khoá ghi chú!"
                 );
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: "Main" }],
-                });
+                setLocalNote({ ...localNote, locked: !localNote.locked });
               } catch (error) {
                 console.error("Error locking/unlocking note:", error);
                 Alert.alert(
@@ -106,42 +106,42 @@ export default function NoteDetailScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Title */}
-        <Text style={styles.title}>{note.title}</Text>
+        <Text style={styles.title}>{localNote.title}</Text>
 
         <Text style={styles.groupText}>Nhóm: {selectedGroupName}</Text>
 
         {/* Icons */}
         <View style={styles.iconRow}>
-          {note.pinned && (
+          {localNote.pinned && (
             <Ionicons
-              name="star"
+              name="bookmark"
               size={20}
-              color={Colors.primary600}
+              color={"gold"}
               style={styles.icon}
             />
           )}
-          {note.locked && (
+          {localNote.locked && (
             <Ionicons
               name="lock-closed"
               size={20}
-              color="red"
+              color="gray"
               style={styles.icon}
             />
           )}
         </View>
 
         {/* Content */}
-        <Text style={styles.content}>{note.content}</Text>
+        <Text style={styles.content}>{localNote.content}</Text>
 
         {/* Images */}
-        {note.images && note.images.length > 0 && (
+        {localNote.images && localNote.images.length > 0 && (
           <>
             <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 8 }}>
               Hình ảnh:
             </Text>
             <View style={styles.imageContainer}>
               {/* Label "Hình ảnh" */}
-              {note.images.map((img, index) => (
+              {localNote.images.map((img, index) => (
                 <Image key={index} source={{ uri: img }} style={styles.image} />
               ))}
             </View>
@@ -151,12 +151,12 @@ export default function NoteDetailScreen() {
 
       {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>
-        {!note.locked && (
+        {!localNote.locked && (
           <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
             <Text style={styles.actionButtonText}>Chỉnh sửa</Text>
           </TouchableOpacity>
         )}
-        {!note.locked && (
+        {!localNote.locked && (
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: "#e74c3c" }]}
             onPress={handleDelete}
@@ -169,7 +169,7 @@ export default function NoteDetailScreen() {
           onPress={handleLock}
         >
           <Text style={styles.actionButtonText}>
-            {note.locked ? "Mở khoá" : "Khoá"}
+            {localNote.locked ? "Mở khoá" : "Khoá"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
   iconRow: {
     flexDirection: "row",
     marginBottom: 8,
+    justifyContent: "flex-end",
   },
   icon: {
     marginRight: 8,

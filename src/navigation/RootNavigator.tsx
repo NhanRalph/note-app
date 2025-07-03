@@ -54,7 +54,7 @@ const RootNavigator = () => {
             </Stack.Screen>
             <Stack.Screen name="CreateGroup" component={CreateGroup} />
             <Stack.Screen name="CreateNote" component={CreateNote} />
-            <Stack.Screen name="NoteDetail" component={NoteDetailScreen} />
+            <Stack.Screen name="NoteDetail" component={NoteDetailScreen} options={{ headerShown: false }} />
 
             <Stack.Screen name="UpdateNote" component={UpdateNoteScreen} />
             <Stack.Screen name="UpdateGroup" component={UpdateGroupScreen} />
