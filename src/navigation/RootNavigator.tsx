@@ -9,7 +9,10 @@ import CustomBottomTab, {
 import { RootState } from '../redux/rootReducer';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import SignUpScreen from '../screens/Auth/SignUpScreen';
+import CreateGroup from "../screens/Group/CreateGroup";
 import HomeScreen from "../screens/Home/HomeScreen";
+import CreateNote from "../screens/Note/CreateNote";
+import NoteDetailScreen from "../screens/Note/NoteDetailScreen";
 import ProfileScreen from "../screens/Profile/ProfileScreen";
 import { RootStackParamList } from "./types/navigationTypes";
 
@@ -48,6 +51,10 @@ const RootNavigator = () => {
             <Stack.Screen name="Main" options={{ headerShown: false }}>
               {() => <CustomBottomTab tabs={userTabBarProps} />}
             </Stack.Screen>
+            <Stack.Screen name="CreateGroup" component={CreateGroup} />
+            <Stack.Screen name="CreateNote" component={CreateNote} />
+            <Stack.Screen name="NoteDetail" component={NoteDetailScreen} />
+
           </>
         ) : (
           <>

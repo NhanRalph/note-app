@@ -12,3 +12,12 @@ export const signUpSchema = Yup.object({
     .oneOf([Yup.ref("password")], "Mật khẩu không khớp")
     .required("Bắt buộc nhập"),
 });
+
+export const createGroupSchema = Yup.object({
+  name: Yup.string().required("Bắt buộc nhập"),
+});
+
+export const createNoteSchema = Yup.object({
+  title: Yup.string().required("Bắt buộc nhập"),
+  content: Yup.string().required("Bắt buộc nhập"),
+});

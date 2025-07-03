@@ -1,3 +1,5 @@
+import { NoteType } from "@/src/api/noteAPI";
+
 export type RootStackParamList = {
   Main: {
     screen: keyof BottomTabParamList;
@@ -5,23 +7,9 @@ export type RootStackParamList = {
   HomeScreen: undefined;
   LoginScreen: undefined;
   SignUpScreen: undefined;
-  WelcomeScreen: undefined;
-  ResultScreen: { date: string };
-  AuthLoadingScreen: undefined;
-  SearchResults: { query: string };
-  PackageDetail: { id: string };
-  CartScreen: undefined;
-  ProfileScreen: undefined;
-  OrderScreen: undefined;
-  OrderDetail: { orderId: string };
-  OrderForm: undefined;
-  OrderResult: { orderData: string } | { vnpayData: string };
-  AddressScreen: undefined;
-  AddAddressScreen: undefined;
-  FilterResults: { brandName: string };
-  EditProfileScreen: undefined;
-  ChangePasswordScreen: undefined;
-  ListFavoriteBlogScreen: undefined;
+  CreateGroup: { userId: string };
+  CreateNote: { userId: string };
+  NoteDetail: { note: NoteType };
 };
 
 export type BottomTabParamList = {
