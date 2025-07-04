@@ -18,6 +18,7 @@ type Props = {
   viewMode: "list" | "grid";
   changeFlag: () => void;
   onLongPressNote?: () => void;
+  setOpenedSwipeRef?: (ref: Swipeable | null) => void;
 };
 
 export default function NoteItem({
@@ -25,6 +26,7 @@ export default function NoteItem({
   viewMode,
   changeFlag,
   onLongPressNote,
+  setOpenedSwipeRef,
 }: Props) {
   const navigation = useNavigation();
   const { user } = useSelector((state: RootState) => state.auth);
@@ -149,7 +151,7 @@ export default function NoteItem({
       </View>
     );
     return (
-      <Swipeable ref={swipeableRef} renderRightActions={renderRightActions}>
+      <Swipeable ref={swipeableRef} renderRightActions={renderRightActions} onSwipeableOpen={() => setOpenedSwipeRef?.(swipeableRef.current)}>
         <TouchableOpacity
           style={[styles.container]}
           onPress={handleNoteClick}

@@ -5,6 +5,7 @@ import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootState } from "@/src/redux/rootReducer";
 import { logout } from "@/src/redux/slices/authSlices";
+import { resetGroupState } from "@/src/redux/slices/groupSlices";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { useSelector } from "react-redux";
 // import { useDispatch } from 'react-redux';
@@ -22,6 +23,7 @@ export default function ProfileScreen() {
         text: "Đăng xuất",
         onPress: () => {
           dispatch(logout()).unwrap();
+          dispatch(resetGroupState());
         },
         style: "destructive",
       },

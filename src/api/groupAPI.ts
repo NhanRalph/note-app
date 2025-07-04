@@ -7,14 +7,26 @@ export interface GroupType {
   name: string;
   createdAt: FirebaseFirestoreTypes.Timestamp;
 }
-
-export const getGroups = async (userId: string): Promise<GroupType[]> => {
-  const snapshot = await firestore()
+export const getGroups = async (
+  userId: string,
+  pageSize: number,
+  lastCreatedAt: string | null
+): Promise<{
+  groups: GroupType[];
+  lastCreatedAt: string | null;
+}> => {
+  let query = firestore()
     .collection("users")
     .doc(userId)
     .collection("groups")
     .orderBy("createdAt", "asc")
-    .get();
+    .limit(pageSize);
+
+  if (lastCreatedAt) {
+    query = query.startAfter(new Date(lastCreatedAt));
+  }
+
+  const snapshot = await query.get();
 
   const groups = snapshot.docs.map((doc) => {
     const data = doc.data();
@@ -26,7 +38,10 @@ export const getGroups = async (userId: string): Promise<GroupType[]> => {
     };
   });
 
-  return groups;
+  const lastGroup = groups[groups.length - 1] || null;
+  const lastCreatedAtResult = lastGroup?.createdAt || null;
+
+  return { groups, lastCreatedAt: lastCreatedAtResult };
 };
 
 export const createGroup = async (userId: string, name: string) => {
@@ -36,9 +51,7 @@ export const createGroup = async (userId: string, name: string) => {
     createdAt: firestore.FieldValue.serverTimestamp(),
   });
 
-  return {
-    id: groupRef.id,
-  };
+  return { id: groupRef.id };
 };
 
 export const updateGroup = async (

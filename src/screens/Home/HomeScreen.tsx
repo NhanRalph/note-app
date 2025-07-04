@@ -22,14 +22,16 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
+  Keyboard,
   Modal,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  TouchableWithoutFeedback,
+  View
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { useSelector } from "react-redux";
 
 export default function HomeScreen() {
@@ -59,10 +61,13 @@ export default function HomeScreen() {
   // Redux hooks
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const { groups, error } = useSelector((state: RootState) => state.group);
+  const { groups, error, lastCreatedAt, loadingGroup, hasMoreGroup } = useSelector((state: RootState) => state.group);
+
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+
+  const [openedSwipeRef, setOpenedSwipeRef] = useState<Swipeable | null>(null);
 
   const fetchNotes = async (params: {
     userId: string;
@@ -182,7 +187,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (user) {
-      dispatch(getGroupsStore({ userId: user.uid }));
+      dispatch(getGroupsStore({ userId: user.uid, pageSize: PAGE_SIZE, lastCreatedAt: null }));
       // fetchNotes({ userId: user.uid, reset: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -359,6 +364,14 @@ export default function HomeScreen() {
     setFlag(!flag);
   };
 
+  const handlePressOutside = () => {
+    if (openedSwipeRef) {
+      openedSwipeRef.close();
+      setOpenedSwipeRef(null);
+    }
+    Keyboard.dismiss(); // Ẩn bàn phím nếu có
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -391,89 +404,101 @@ export default function HomeScreen() {
       </View>
 
       <View style={{ flexDirection: "row", marginVertical: 12 }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.groupsScroll}
-        >
-          <TouchableOpacity style={styles.addGroupBtn} onPress={createGroup}>
-            <Ionicons name="add" size={20} color={Colors.primary600} />
-          </TouchableOpacity>
-          {[
-            { id: "all", name: "Tất cả", createdAt: "" },
-            { id: "pinned", name: "Ghim", createdAt: "" },
-            ...groups,
-          ].map((group) => (
-            <View key={group.id} style={{ position: "relative" }}>
-              <TouchableOpacity
-                onPress={() => setSelectedGroupId(group.id)}
-                onLongPress={() => handleGroupLongPress(group.id)}
-                delayLongPress={300}
-                style={[
-                  styles.listGroupItem,
-                  selectedGroupId === group.id && {
-                    backgroundColor: Colors.primary200,
-                  },
-                ]}
-              >
-                <GroupItem group={group} />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
+      <FlatList
+  data={[{ id: "all", name: "Tất cả", createdAt: "" }, { id: "pinned", name: "Ghim", createdAt: "" }, ...groups]}
+  keyExtractor={(item) => item.id}
+  horizontal
+  showsHorizontalScrollIndicator={false}
+  renderItem={({ item }) => (
+    <View key={item.id} style={{ position: "relative" }}>
+      <TouchableOpacity
+        onPress={() => setSelectedGroupId(item.id)}
+        onLongPress={() => handleGroupLongPress(item.id)}
+        delayLongPress={300}
+        style={[
+          styles.listGroupItem,
+          selectedGroupId === item.id && {
+            backgroundColor: Colors.primary200,
+          },
+        ]}
+      >
+        <GroupItem group={item} />
+      </TouchableOpacity>
+    </View>
+  )}
+  ListHeaderComponent={
+    <TouchableOpacity style={styles.addGroupBtn} onPress={createGroup}>
+      <Ionicons name="add" size={20} color={Colors.primary600} />
+    </TouchableOpacity>
+  }
+  onEndReached={() => {
+    if (!user || loadingGroup || !hasMoreGroup) return;
+    dispatch(
+      getGroupsStore({
+        userId: user.uid,
+        pageSize: PAGE_SIZE,
+        lastCreatedAt: lastCreatedAt,
+      })
+    );
+  }}
+  onEndReachedThreshold={0.3}
+/>
       </View>
 
       {/* Notes */}
-      <FlatList
-        data={notes}
-        key={viewMode}
-        numColumns={viewMode === "grid" ? 2 : 1}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <NoteItem
-            note={item}
-            viewMode={viewMode}
-            changeFlag={handleChangeFlag}
-            onLongPressNote={() => {
-              setSelectedNoteActionId(item.id);
-              setSelectedNote(item);
-            }}
-          />
-        )}
-        showsVerticalScrollIndicator={false}
-        onEndReached={() => {
-          if (!user || loadingMore || !hasMore) return;
+    <TouchableWithoutFeedback onPress={handlePressOutside}>
+        <FlatList
+          data={notes}
+          key={viewMode}
+          numColumns={viewMode === "grid" ? 2 : 1}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <NoteItem
+              note={item}
+              viewMode={viewMode}
+              changeFlag={handleChangeFlag}
+              onLongPressNote={() => {
+                setSelectedNoteActionId(item.id);
+                setSelectedNote(item);
+              }}
+              setOpenedSwipeRef={setOpenedSwipeRef}
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+          onEndReached={() => {
+            if (!user || loadingMore || !hasMore) return;
 
-          if (selectedGroupId === "all") {
-            fetchAllNotes({
-              userId: user.uid,
-              keyword: debouncedKeyword,
-              isLoadMore: true,
-            });
-          } else if (selectedGroupId === "pinned") {
-            fetchPinnedNotes({
-              userId: user.uid,
-              keyword: debouncedKeyword,
-              isLoadMore: true,
-            });
-          } else {
-            fetchNotes({
-              userId: user.uid,
-              groupId: selectedGroupId,
-              keyword: debouncedKeyword,
-              isLoadMore: true,
-            });
+            if (selectedGroupId === "all") {
+              fetchAllNotes({
+                userId: user.uid,
+                keyword: debouncedKeyword,
+                isLoadMore: true,
+              });
+            } else if (selectedGroupId === "pinned") {
+              fetchPinnedNotes({
+                userId: user.uid,
+                keyword: debouncedKeyword,
+                isLoadMore: true,
+              });
+            } else {
+              fetchNotes({
+                userId: user.uid,
+                groupId: selectedGroupId,
+                keyword: debouncedKeyword,
+                isLoadMore: true,
+              });
+            }
+          }}
+          onEndReachedThreshold={0.3}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={{ padding: 16, alignItems: "center" }}>
+                <Text style={{ color: "#888" }}>Đang tải thêm...</Text>
+              </View>
+            ) : null
           }
-        }}
-        onEndReachedThreshold={0.3}
-        ListFooterComponent={
-          loadingMore ? (
-            <View style={{ padding: 16, alignItems: "center" }}>
-              <Text style={{ color: "#888" }}>Đang tải thêm...</Text>
-            </View>
-          ) : null
-        }
-      />
+        />
+    </TouchableWithoutFeedback>
 
       {/* Nút thêm Note */}
       <TouchableOpacity style={styles.addNoteBtn} onPress={createNote}>
