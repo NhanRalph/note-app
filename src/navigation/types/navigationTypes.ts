@@ -8,7 +8,7 @@ export type RootStackParamList = {
   LoginScreen: undefined;
   SignUpScreen: undefined;
   CreateGroup: { userId: string };
-  CreateNote: { userId: string };
+  CreateNote: { userId: string; groupId: string };
   NoteDetail: { note: NoteType };
   UpdateNote: { note: NoteType };
   UpdateGroup: { userId: string; groupId: string; name: string };

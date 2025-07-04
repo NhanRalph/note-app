@@ -31,16 +31,18 @@ interface CreateNoteScreenProps {
 const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   const dispatch = useAppDispatch();
   const userId = route.params?.userId;
+  const groupId = route.params?.groupId;
+
   const navigation = useNavigation();
   const { groups } = useSelector((state: RootState) => state.group);
 
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(groupId);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const selectedGroupName =
-    selectedGroupId === null
+    (selectedGroupId === null || selectedGroupId === "all" || selectedGroupId === "pinned")
       ? "Không thuộc nhóm nào"
       : groups.find((g) => g.id === selectedGroupId)?.name || "Không rõ";
 

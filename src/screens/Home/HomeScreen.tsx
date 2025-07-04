@@ -1,5 +1,6 @@
 import {
   deleteNote,
+  getLockedNotes,
   getNotes,
   getPinnedNotes,
   NoteType,
@@ -29,7 +30,7 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View
+  View,
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import { useSelector } from "react-redux";
@@ -61,7 +62,8 @@ export default function HomeScreen() {
   // Redux hooks
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const { groups, error, lastCreatedAt, loadingGroup, hasMoreGroup } = useSelector((state: RootState) => state.group);
+  const { groups, error, lastCreatedAt, loadingGroup, hasMoreGroup } =
+    useSelector((state: RootState) => state.group);
 
   const { user } = useSelector((state: RootState) => state.auth);
 
@@ -184,10 +186,53 @@ export default function HomeScreen() {
       setLoadingMore(false);
     }
   };
+  
+  const fetchLockedNotes = async (params: {
+    userId: string;
+    keyword?: string;
+    reset?: boolean;
+    isLoadMore?: boolean;
+  }) => {
+    try {
+      if (loading || loadingMore || (!hasMore && params.isLoadMore)) return;
+
+      if (params.isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      const response = await getLockedNotes(
+        params.userId,
+        PAGE_SIZE,
+        params.reset ? undefined : lastDoc,
+        params.keyword
+      );
+
+      if (params.reset) {
+        setNotes(response.notes);
+      } else {
+        setNotes((prev) => [...prev, ...response.notes]);
+      }
+
+      setLastDoc(response.lastVisible);
+      setHasMore(response.notes.length >= PAGE_SIZE);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
-      dispatch(getGroupsStore({ userId: user.uid, pageSize: PAGE_SIZE, lastCreatedAt: null }));
+      dispatch(
+        getGroupsStore({
+          userId: user.uid,
+          pageSize: PAGE_SIZE,
+          lastCreatedAt: null,
+        })
+      );
       // fetchNotes({ userId: user.uid, reset: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -205,6 +250,12 @@ export default function HomeScreen() {
       });
     } else if (selectedGroupId === "pinned") {
       fetchPinnedNotes({
+        userId: user.uid,
+        keyword: debouncedKeyword,
+        reset: true,
+      });
+    } else if (selectedGroupId === "locked") {
+      fetchLockedNotes({
         userId: user.uid,
         keyword: debouncedKeyword,
         reset: true,
@@ -232,11 +283,14 @@ export default function HomeScreen() {
       navigation.navigate("LoginScreen");
       return;
     }
-    navigation.navigate("CreateNote", { userId: user.uid });
+    navigation.navigate("CreateNote", {
+      userId: user.uid,
+      groupId: selectedGroupId,
+    });
   };
 
   const handleGroupLongPress = (groupId: string) => {
-    if (groupId === "all") return;
+    if (groupId === "all" || groupId === "pinned" || groupId === "locked") return;
     setSelectedGroupActionId(groupId);
   };
 
@@ -246,8 +300,6 @@ export default function HomeScreen() {
 
   // Dummy update/delete functions
   const handleUpdateGroup = (groupId: string) => {
-    // Implement your update logic here
-    alert(`Update group ${groupId}`);
     navigation.navigate("UpdateGroup", {
       userId: user!.uid,
       groupId: groupId,
@@ -404,49 +456,54 @@ export default function HomeScreen() {
       </View>
 
       <View style={{ flexDirection: "row", marginVertical: 12 }}>
-      <FlatList
-  data={[{ id: "all", name: "Tất cả", createdAt: "" }, { id: "pinned", name: "Ghim", createdAt: "" }, ...groups]}
-  keyExtractor={(item) => item.id}
-  horizontal
-  showsHorizontalScrollIndicator={false}
-  renderItem={({ item }) => (
-    <View key={item.id} style={{ position: "relative" }}>
-      <TouchableOpacity
-        onPress={() => setSelectedGroupId(item.id)}
-        onLongPress={() => handleGroupLongPress(item.id)}
-        delayLongPress={300}
-        style={[
-          styles.listGroupItem,
-          selectedGroupId === item.id && {
-            backgroundColor: Colors.primary200,
-          },
-        ]}
-      >
-        <GroupItem group={item} />
-      </TouchableOpacity>
-    </View>
-  )}
-  ListHeaderComponent={
-    <TouchableOpacity style={styles.addGroupBtn} onPress={createGroup}>
-      <Ionicons name="add" size={20} color={Colors.primary600} />
-    </TouchableOpacity>
-  }
-  onEndReached={() => {
-    if (!user || loadingGroup || !hasMoreGroup) return;
-    dispatch(
-      getGroupsStore({
-        userId: user.uid,
-        pageSize: PAGE_SIZE,
-        lastCreatedAt: lastCreatedAt,
-      })
-    );
-  }}
-  onEndReachedThreshold={0.3}
-/>
+        <FlatList
+          data={[
+            { id: "all", name: "Tất cả", createdAt: "" },
+            { id: "pinned", name: "Ghim", createdAt: "" },
+            { id: "locked", name: "Đã khoá", createdAt: "" },
+            ...groups,
+          ]}
+          keyExtractor={(item) => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View key={item.id} style={{ position: "relative" }}>
+              <TouchableOpacity
+                onPress={() => setSelectedGroupId(item.id)}
+                onLongPress={() => handleGroupLongPress(item.id)}
+                delayLongPress={300}
+                style={[
+                  styles.listGroupItem,
+                  selectedGroupId === item.id && {
+                    backgroundColor: Colors.red500 + "15",
+                  },
+                ]}
+              >
+                <GroupItem group={item} />
+              </TouchableOpacity>
+            </View>
+          )}
+          ListHeaderComponent={
+            <TouchableOpacity style={styles.addGroupBtn} onPress={createGroup}>
+              <Ionicons name="add" size={20} color={Colors.primary600} />
+            </TouchableOpacity>
+          }
+          onEndReached={() => {
+            if (!user || loadingGroup || !hasMoreGroup) return;
+            dispatch(
+              getGroupsStore({
+                userId: user.uid,
+                pageSize: PAGE_SIZE,
+                lastCreatedAt: lastCreatedAt,
+              })
+            );
+          }}
+          onEndReachedThreshold={0.3}
+        />
       </View>
 
       {/* Notes */}
-    <TouchableWithoutFeedback onPress={handlePressOutside}>
+      <TouchableWithoutFeedback onPress={handlePressOutside}>
         <FlatList
           data={notes}
           key={viewMode}
@@ -498,7 +555,7 @@ export default function HomeScreen() {
             ) : null
           }
         />
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
 
       {/* Nút thêm Note */}
       <TouchableOpacity style={styles.addNoteBtn} onPress={createNote}>
@@ -518,16 +575,21 @@ export default function HomeScreen() {
         >
           <View style={styles.groupActionsModal}>
             <TouchableOpacity
-              style={styles.actionBtn}
+              style={[styles.actionBtn, { backgroundColor: "#4b7bec15" }]}
               onPress={() => handleUpdateGroup(selectedGroupActionId!)}
             >
-              <Text style={styles.actionText}>Chỉnh sửa</Text>
+              <Text style={[styles.actionText, { color: "#4b7bec" }]}>
+                <Ionicons name="pencil" size={14} color={"#4b7bec"} /> Chỉnh sửa
+              </Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              style={styles.actionBtn}
+              style={[styles.actionBtn, { backgroundColor: "#EF444415" }]}
               onPress={() => handleDeleteGroup(selectedGroupActionId!)}
             >
-              <Text style={styles.actionText}>Xoá</Text>
+              <Text style={[styles.actionText, { color: "#EF4444" }]}>
+                <Ionicons name="trash" size={14} color={"#EF4444"} /> Xoá
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.closeActionBtn}
@@ -540,66 +602,80 @@ export default function HomeScreen() {
       </Modal>
 
       {selectedNote && (
-  <Modal
-    visible={!!selectedNoteActionId}
-    transparent
-    animationType="fade"
-    onRequestClose={() => setSelectedNoteActionId(null)}
-  >
-    <TouchableOpacity
-      style={styles.modalOverlay}
-      activeOpacity={1}
-      onPress={() => setSelectedNoteActionId(null)}
-    >
-      <View style={styles.groupActionsModal}>
-        
-        {/* Ghim */}
-        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#a855f715" } ]} onPress={() => handlePinNote(selectedNote)}>
-        <Text style={[styles.actionText, { color: "#a855f7" }]}>
-            <Ionicons name="bookmark" size={14} color={"#a855f7"} /> Ghim
-          </Text>
-        </TouchableOpacity>
+        <Modal
+          visible={!!selectedNoteActionId}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSelectedNoteActionId(null)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setSelectedNoteActionId(null)}
+          >
+            <View style={styles.groupActionsModal}>
+              {/* Ghim */}
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: "#a855f715" }]}
+                onPress={() => handlePinNote(selectedNote)}
+              >
+                <Text style={[styles.actionText, { color: "#a855f7" }]}>
+                  <Ionicons name="bookmark" size={14} color={"#a855f7"} /> Ghim
+                </Text>
+              </TouchableOpacity>
 
-        {/* Khoá / Mở khoá */}
-        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#4b556315" } ]} onPress={() => handleLockNote(selectedNote)}>
-        <Text style={[styles.actionText, { color: "#4b5563" }]}>
-            <Ionicons
-              name={selectedNote.locked ? "lock-open" : "lock-closed"}
-              size={14}
-              color={"#4b5563"}
-              style={{ marginLeft: 8 }}
-            />{" "}
-            {selectedNote.locked ? "Mở khoá" : "Khoá"}
-          </Text>
-        </TouchableOpacity>
+              {/* Khoá / Mở khoá */}
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: "#4b556315" }]}
+                onPress={() => handleLockNote(selectedNote)}
+              >
+                <Text style={[styles.actionText, { color: "#4b5563" }]}>
+                  <Ionicons
+                    name={selectedNote.locked ? "lock-open" : "lock-closed"}
+                    size={14}
+                    color={"#4b5563"}
+                    style={{ marginLeft: 8 }}
+                  />{" "}
+                  {selectedNote.locked ? "Mở khoá" : "Khoá"}
+                </Text>
+              </TouchableOpacity>
 
-        {/* Chỉnh sửa (chỉ khi chưa khoá) */}
-        {!selectedNote.locked && (
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#4b7bec15" } ]} onPress={() => handleEditNote(selectedNote)}>
-            <Text style={[styles.actionText, { color: "#4b7bec" }]}>
-              <Ionicons name="pencil" size={14} color={"#4b7bec"} /> Chỉnh sửa
-            </Text>
+              {/* Chỉnh sửa (chỉ khi chưa khoá) */}
+              {!selectedNote.locked && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: "#4b7bec15" }]}
+                  onPress={() => handleEditNote(selectedNote)}
+                >
+                  <Text style={[styles.actionText, { color: "#4b7bec" }]}>
+                    <Ionicons name="pencil" size={14} color={"#4b7bec"} /> Chỉnh
+                    sửa
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Xoá (chỉ khi chưa khoá) */}
+              {!selectedNote.locked && (
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: "#EF444415" }]}
+                  onPress={() => handleDeleteNote(selectedNote)}
+                >
+                  <Text style={[styles.actionText, { color: "#EF4444" }]}>
+                    <Ionicons name="trash" size={14} color={"#EF4444"} /> Xoá
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Đóng */}
+              <TouchableOpacity
+                style={styles.closeActionBtn}
+                onPress={() => setSelectedNoteActionId(null)}
+              >
+                <Ionicons name="close" size={18} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
-        )}
-
-        {/* Xoá (chỉ khi chưa khoá) */}
-        {!selectedNote.locked && (
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#EF444415" } ]} onPress={() => handleDeleteNote(selectedNote)}>
-            <Text style={[styles.actionText, { color: "#EF4444" }]}>
-              <Ionicons name="trash" size={14} color={"#EF4444"} /> Xoá
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Đóng */}
-        <TouchableOpacity style={styles.closeActionBtn} onPress={() => setSelectedNoteActionId(null)}>
-          <Ionicons name="close" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  </Modal>
-)}
-
+        </Modal>
+      )}
     </View>
   );
 }

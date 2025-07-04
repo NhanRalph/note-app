@@ -192,3 +192,55 @@ export const getPinnedNotes = async (
 
   return { notes, lastVisible };
 };
+
+export const getLockedNotes = async (
+  userId: string,
+  pageSize: number,
+  lastDoc?: FirebaseFirestoreTypes.DocumentSnapshot,
+  keyword?: string
+) => {
+  let query = firestore()
+    .collection("users")
+    .doc(userId)
+    .collection("notes")
+    .where("locked", "==", true)
+    .orderBy("updatedAt", "desc")
+    .limit(pageSize);
+
+  if (lastDoc) {
+    query = query.startAfter(lastDoc);
+  }
+
+  const snapshot = await query.get();
+
+  let notes = snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      title: data.title,
+      content: data.content,
+      images: data.images || [],
+      groupId: data.groupId || null,
+      locked: !!data.locked,
+      pinned: !!data.pinned,
+      createdAt:
+        data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+      updatedAt:
+        data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+    };
+  });
+
+  // Lọc theo keyword nếu có
+  if (keyword) {
+    const lowerKeyword = keyword.toLowerCase();
+    notes = notes.filter(
+      (note) =>
+        note.title?.toLowerCase().includes(lowerKeyword) ||
+        note.content?.toLowerCase().includes(lowerKeyword)
+    );
+  }
+
+  const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+
+  return { notes, lastVisible };
+};

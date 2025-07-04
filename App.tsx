@@ -2,18 +2,21 @@ import React from 'react';
 import { SafeAreaView, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
+import { PersistGate } from "redux-persist/integration/react";
 import Colors from './src/constants/Colors';
 import RootNavigator from './src/navigation';
-import store from './src/redux';
+import store, { persistor } from './src/redux';
 
 const App = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
         {/* Bạn có thể bọc SafeAreaView ở đây nếu thực sự cần */}
         <SafeAreaView style={styles.container}>
           <RootNavigator />
         </SafeAreaView>
+      </PersistGate>
       </Provider>
     </GestureHandlerRootView>
   );

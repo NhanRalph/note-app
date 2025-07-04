@@ -33,9 +33,9 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Thông tin cá nhân</Text>
-      <UserInfoRow label="Họ tên" value={"Nhân"} />
+      {/* <UserInfoRow label="Họ tên" value={"Nhân"} /> */}
       <UserInfoRow label="Email" value={user?.email || "Khách"} />
-      <UserInfoRow label="SĐT" value={"0123456789"} />
+      {/* <UserInfoRow label="SĐT" value={"0123456789"} /> */}
 
       <View style={styles.logoutBtn}>
         {
