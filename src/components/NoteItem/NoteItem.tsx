@@ -38,24 +38,34 @@ export default function NoteItem({
   const swipeableRef = useRef<any>(null);
 
   const handlePinNote = (note: NoteType) => {
-    Alert.alert("Ghim ghi chú", "Bạn có muốn ghim ghi chú này không?", [
-      { text: "Huỷ", style: "cancel" },
-      {
-        text: "Ghim",
-        onPress: async () => {
-          try {
-            // Call pin API here
-            await togglePinNote(user!.uid, note.id, !note.pinned);
-            Alert.alert("Thành công", "Đã ghim ghi chú!");
-            changeFlag();
-            swipeableRef.current?.close();
-          } catch (error) {
-            console.error("Error pinning note:", error);
-            Alert.alert("Lỗi", "Không thể ghim ghi chú. Vui lòng thử lại sau.");
-          }
+    Alert.alert(
+      "Ghim ghi chú",
+      note.pinned
+        ? "Bạn có muốn bỏ ghim ghi chú này không?"
+        : "Bạn có muốn ghim ghi chú này không?",
+      [
+        { text: "Huỷ", style: "cancel" },
+        {
+          text: note.pinned
+        ? "Bỏ ghim" : "Ghim",
+          onPress: async () => {
+            try {
+              // Call pin API here
+              await togglePinNote(user!.uid, note.id, !note.pinned);
+              Alert.alert("Thành công", "Đã ghim ghi chú!");
+              changeFlag();
+              swipeableRef.current?.close();
+            } catch (error) {
+              console.error("Error pinning note:", error);
+              Alert.alert(
+                "Lỗi",
+                "Không thể ghim ghi chú. Vui lòng thử lại sau."
+              );
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   const handleEdit = () => {
@@ -123,13 +133,16 @@ export default function NoteItem({
     const renderRightActions = () => (
       <View style={styles.actionsRow}>
         <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: "#a855f7" } ]}
+          style={[styles.actionBtn, { backgroundColor: "#a855f7" }]}
           onPress={() => handlePinNote(note)}
         >
           <Ionicons name="bookmark" size={20} color="#fff" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#4b5563" } ]} onPress={handleLock}>
+        <TouchableOpacity
+          style={[styles.actionBtn, { backgroundColor: "#4b5563" }]}
+          onPress={handleLock}
+        >
           {note.locked ? (
             <Ionicons name="lock-open" size={20} color="#fff" />
           ) : (
@@ -138,20 +151,30 @@ export default function NoteItem({
         </TouchableOpacity>
 
         {!note.locked && (
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#4b7bec" } ]} onPress={handleEdit}>
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: "#4b7bec" }]}
+            onPress={handleEdit}
+          >
             <Ionicons name="pencil" size={20} color="#fff" />
           </TouchableOpacity>
         )}
 
         {!note.locked && (
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#EF4444" } ]} onPress={handleDelete}>
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: "#EF4444" }]}
+            onPress={handleDelete}
+          >
             <Ionicons name="trash" size={20} color="#fff" />
           </TouchableOpacity>
         )}
       </View>
     );
     return (
-      <Swipeable ref={swipeableRef} renderRightActions={renderRightActions} onSwipeableOpen={() => setOpenedSwipeRef?.(swipeableRef.current)}>
+      <Swipeable
+        ref={swipeableRef}
+        renderRightActions={renderRightActions}
+        onSwipeableOpen={() => setOpenedSwipeRef?.(swipeableRef.current)}
+      >
         <TouchableOpacity
           style={[styles.container]}
           onPress={handleNoteClick}
@@ -169,7 +192,9 @@ export default function NoteItem({
               {note.locked && (
                 <Ionicons name="lock-closed" size={16} color="gray" />
               )}
-              {note.pinned && <Ionicons name="bookmark" size={16} color="gold" />}
+              {note.pinned && (
+                <Ionicons name="bookmark" size={16} color="gold" />
+              )}
             </View>
           </View>
           <Text numberOfLines={2} style={styles.content}>

@@ -9,7 +9,15 @@ import { createGroupSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
 import { Formik } from "formik";
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
 
 interface UpdateGroupScreenProps {
@@ -22,23 +30,28 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
   const groupId = route.params?.groupId;
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const { loading, error } = useSelector(
-    (state: RootState) => state.group
-  );
+  const { loadingGroup, error } = useSelector((state: RootState) => state.group);
 
   const initialValues = {
     name: name || "",
   };
 
   const handleSubmit = (values: { name: string }) => {
-    dispatch(updateGroupStore({ userId: userId, groupId: groupId, name: values.name }));
+    dispatch(
+      updateGroupStore({ userId: userId, groupId: groupId, name: values.name })
+    );
 
     //check create group success
     if (error) {
       Alert.alert("Error", error);
       return;
     }
-    
+
+    Toast.show({
+      type: "success",
+      text1: "Thành công",
+      text2: "Đã chỉnh sửa thành công!",
+    });
     navigation.reset({
       index: 0,
       routes: [{ name: "Main" }],
@@ -48,7 +61,10 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
   return (
     <View style={styles.container}>
       {/* Back Button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={() => navigation.goBack()}
+      >
         <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
       </TouchableOpacity>
       <Text style={styles.title}>Chỉnh sửa nhóm ghi chú</Text>
@@ -85,7 +101,7 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
               size="large"
               color={Colors.primary600}
               onPress={handleSubmit}
-              loading={loading}
+              loading={loadingGroup}
             />
           </>
         )}

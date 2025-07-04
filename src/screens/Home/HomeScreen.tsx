@@ -33,6 +33,7 @@ import {
   View,
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
+import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
 
 export default function HomeScreen() {
@@ -186,7 +187,7 @@ export default function HomeScreen() {
       setLoadingMore(false);
     }
   };
-  
+
   const fetchLockedNotes = async (params: {
     userId: string;
     keyword?: string;
@@ -290,7 +291,8 @@ export default function HomeScreen() {
   };
 
   const handleGroupLongPress = (groupId: string) => {
-    if (groupId === "all" || groupId === "pinned" || groupId === "locked") return;
+    if (groupId === "all" || groupId === "pinned" || groupId === "locked")
+      return;
     setSelectedGroupActionId(groupId);
   };
 
@@ -321,6 +323,12 @@ export default function HomeScreen() {
         onPress: () => {
           dispatch(deleteGroupStore({ userId: user!.uid, groupId }));
           handleCloseActions();
+
+          Toast.show({
+            type: "success",
+            text1: "Thành công",
+            text2: "Đã xoá nhóm thành công!",
+          });
           setIsDeleted(!isDeleted);
         },
       },
@@ -328,28 +336,45 @@ export default function HomeScreen() {
   };
 
   const handlePinNote = (note: NoteType) => {
-    Alert.alert("Ghim ghi chú", "Bạn có muốn ghim ghi chú này không?", [
-      { text: "Huỷ", style: "cancel" },
-      {
-        text: "Ghim",
-        onPress: async () => {
-          try {
-            // Call pin API here
-            await togglePinNote(user!.uid, note.id, !note.pinned);
-            Alert.alert("Thành công", "Đã ghim ghi chú!");
-            setFlag(!flag);
-            setSelectedNoteActionId(null);
-            setSelectedNote(null);
-          } catch (error) {
-            console.error("Error pinning note:", error);
-            Alert.alert("Lỗi", "Không thể ghim ghi chú. Vui lòng thử lại sau.");
-          }
+    Alert.alert(
+      "Ghim ghi chú",
+      note.pinned
+        ? "Bạn có muốn bỏ ghim ghi chú này không?"
+        : "Bạn có muốn ghim ghi chú này không?",
+      [
+        { text: "Huỷ", style: "cancel" },
+        {
+          text: note.pinned
+        ? "Bỏ ghim" : "Ghim",
+          onPress: async () => {
+            try {
+              // Call pin API here
+              await togglePinNote(user!.uid, note.id, !note.pinned);
+
+              Toast.show({
+                type: "success",
+                text1: "Thành công",
+                text2: "Đã ghim ghi chú",
+              });
+              setFlag(!flag);
+              setSelectedNoteActionId(null);
+              setSelectedNote(null);
+            } catch (error) {
+              console.error("Error pinning note:", error);
+              Alert.alert(
+                "Lỗi",
+                "Không thể ghim ghi chú. Vui lòng thử lại sau."
+              );
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   const handleEditNote = (note: NoteType) => {
+    setSelectedNoteActionId(null);
+    setSelectedNote(null);
     navigation.navigate("UpdateNote", { note });
   };
 
@@ -363,7 +388,12 @@ export default function HomeScreen() {
           try {
             // Call delete API here
             await deleteNote(user!.uid, note.id);
-            Alert.alert("Thành công", "Đã xoá ghi chú!");
+
+            Toast.show({
+              type: "success",
+              text1: "Thành công",
+              text2: "Đã xoá thành công!",
+            });
             setFlag(!flag);
             setSelectedNoteActionId(null);
             setSelectedNote(null);
@@ -391,10 +421,13 @@ export default function HomeScreen() {
               try {
                 // Call lock/unlock API here
                 await toggleLockNote(user!.uid, note.id, !note.locked);
-                Alert.alert(
-                  "Thành công",
-                  note.locked ? "Đã mở khoá ghi chú!" : "Đã khoá ghi chú!"
-                );
+                Toast.show({
+                  type: "success",
+                  text1: "Thành công",
+                  text2: note.locked
+                    ? "Đã mở khoá ghi chú!"
+                    : "Đã khoá ghi chú!",
+                });
                 setFlag(!flag);
                 setSelectedNoteActionId(null);
                 setSelectedNote(null);
@@ -620,7 +653,8 @@ export default function HomeScreen() {
                 onPress={() => handlePinNote(selectedNote)}
               >
                 <Text style={[styles.actionText, { color: "#a855f7" }]}>
-                  <Ionicons name="bookmark" size={14} color={"#a855f7"} /> Ghim
+                  <Ionicons name="bookmark" size={14} color={"#a855f7"} /> {selectedNote.pinned
+                  ? "Bỏ ghim" : "Ghim"}
                 </Text>
               </TouchableOpacity>
 

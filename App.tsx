@@ -1,6 +1,7 @@
 import React from 'react';
 import { SafeAreaView, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Toast from "react-native-toast-message";
 import { Provider } from 'react-redux';
 import { PersistGate } from "redux-persist/integration/react";
 import Colors from './src/constants/Colors';
@@ -15,6 +16,7 @@ const App = () => {
         {/* Bạn có thể bọc SafeAreaView ở đây nếu thực sự cần */}
         <SafeAreaView style={styles.container}>
           <RootNavigator />
+          <Toast />
         </SafeAreaView>
       </PersistGate>
       </Provider>

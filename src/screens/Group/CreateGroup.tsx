@@ -9,7 +9,15 @@ import { createGroupSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
 import { Formik } from "formik";
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
 
 interface CreateGroupScreenProps {
@@ -20,7 +28,7 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
   const userId = route.params?.userId;
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const { loading, error } = useSelector(
+  const { loadingGroup, error } = useSelector(
     (state: RootState) => state.group
   );
 
@@ -44,6 +52,12 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
       Alert.alert("Error", error);
       return;
     }
+
+    Toast.show({
+      type: "success",
+      text1: "Thành công",
+      text2: "Đã tạo nhóm ghi chú mới!",
+    });
     navigation.navigate("Main", {
       screen: "Home",
     });
@@ -52,7 +66,10 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
   return (
     <View style={styles.container}>
       {/* Back Button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={() => navigation.goBack()}
+      >
         <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
       </TouchableOpacity>
       <Text style={styles.title}>Tạo nhóm ghi chú</Text>
@@ -89,7 +106,7 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
               size="large"
               color={Colors.primary600}
               onPress={handleSubmit}
-              loading={loading}
+              loading={loadingGroup}
             />
           </>
         )}
