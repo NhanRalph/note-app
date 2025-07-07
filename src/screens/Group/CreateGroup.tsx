@@ -58,9 +58,10 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
       text1: "Thành công",
       text2: "Đã tạo nhóm ghi chú mới!",
     });
-    navigation.navigate("Main", {
-      screen: "Home",
-    });
+    // navigation.navigate("Main", {
+    //   screen: "Home",
+    // });
+    navigation.goBack();
   };
 
   return (
@@ -86,6 +87,7 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
           values,
           errors,
           touched,
+          dirty,
         }) => (
           <>
             <TextInput
@@ -107,6 +109,7 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
               color={Colors.primary600}
               onPress={handleSubmit}
               loading={loadingGroup}
+              disabled={!dirty}
             />
           </>
         )}

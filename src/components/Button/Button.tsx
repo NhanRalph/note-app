@@ -6,6 +6,7 @@ interface ButtonProps {
   size?: 'large' | 'medium' | 'small';
   color?: string;
   loading?: boolean;
+  disabled?: boolean;
 }
 
 export default function Button({
@@ -14,6 +15,7 @@ export default function Button({
   size = 'small',
   color = '#007bff',
   loading = false,
+  disabled
 }: ButtonProps) {
   let widthStyle = {};
 
@@ -25,10 +27,12 @@ export default function Button({
 
   return (
     <TouchableOpacity
-      style={[styles.button, { backgroundColor: color }, widthStyle]}
-      onPress={onPress}
-      activeOpacity={0.8}
-      disabled={loading} // Khi loading thì disable luôn button
+    onPress={onPress}
+    activeOpacity={0.8}
+    disabled={loading || disabled} // Khi loading thì disable luôn button
+      style={[styles.button, { backgroundColor: color, 
+        opacity: loading || disabled ? 0.6 : 1
+       }, widthStyle]}
     >
       {loading ? (
         <ActivityIndicator color="#fff" />

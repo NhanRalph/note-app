@@ -76,6 +76,17 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const getGroupId = (groupId: string | null) => {
+    switch (groupId) {
+      case "all":
+      case "pinned":
+      case "locked":
+        return "all";
+      default:
+        return groupId as string;
+    }
+  }
+
   const handleSubmit = async (values: { title: string; content: string }) => {
     try {
       setLoading(true);
@@ -94,9 +105,12 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
         text1: "Thành công",
         text2: "Đã tạo ghi chú!",
       });
-      navigation.reset({
+
+      //reset navigation to ListNotesScreen
+      navigation.reset(
+        {
         index: 0,
-        routes: [{ name: "Main" }],
+        routes: [{ name: "ListNotesScreen", params: { userId, groupId: getGroupId(selectedGroupId) } }],
       });
     } catch (error) {
       console.log(error);
@@ -129,6 +143,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
             values,
             errors,
             touched,
+            dirty,
           }) => (
             <>
               <TextInput
@@ -228,6 +243,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
                 color={Colors.primary600}
                 onPress={handleSubmit}
                 loading={loading}
+                disabled={!dirty}
               />
             </>
           )}

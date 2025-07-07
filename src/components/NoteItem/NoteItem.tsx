@@ -7,6 +7,7 @@ import {
 import Colors from "@/src/constants/Colors";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootState } from "@/src/redux/rootReducer";
+import { formatDate } from "@/src/utils/formatDate";
 import { Ionicons } from "@expo/vector-icons";
 import { useRef } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -46,8 +47,7 @@ export default function NoteItem({
       [
         { text: "Huỷ", style: "cancel" },
         {
-          text: note.pinned
-        ? "Bỏ ghim" : "Ghim",
+          text: note.pinned ? "Bỏ ghim" : "Ghim",
           onPress: async () => {
             try {
               // Call pin API here
@@ -184,7 +184,9 @@ export default function NoteItem({
           <View
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
-            <Text style={styles.title}>{note.title}</Text>
+            <Text numberOfLines={1} style={styles.title}>
+              {note.title}
+            </Text>
 
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
@@ -195,11 +197,21 @@ export default function NoteItem({
               {note.pinned && (
                 <Ionicons name="bookmark" size={16} color="gold" />
               )}
+
+              {note.images.length !== 0 && (
+                <Ionicons name="image-outline" size={16} color="gray" />
+              )}
             </View>
           </View>
           <Text numberOfLines={2} style={styles.content}>
             {note.content}
           </Text>
+
+          <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+            <Text numberOfLines={1} style={styles.contentDate}>
+              {formatDate(note.updatedAt.toString())}
+            </Text>
+          </View>
         </TouchableOpacity>
       </Swipeable>
     );
@@ -213,17 +225,30 @@ export default function NoteItem({
       delayLongPress={300}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={styles.title}>{note.title}</Text>
-        <View>
+        <View style={{ width: "70%" }}>
+          <Text numberOfLines={1} style={styles.title}>
+            {note.title}
+          </Text>
+        </View>
+        <View style={styles.actionsRow}>
+          {note.images.length !== 0 && (
+            <Ionicons name="image-outline" size={16} color="gray" />
+          )}
           {note.locked && (
             <Ionicons name="lock-closed" size={16} color="gray" />
           )}
           {note.pinned && <Ionicons name="star" size={16} color="gold" />}
         </View>
       </View>
-      <Text numberOfLines={2} style={styles.content}>
+      <Text numberOfLines={1} style={styles.content}>
         {note.content}
       </Text>
+
+      <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+        <Text numberOfLines={1} style={styles.contentDate}>
+          {formatDate(note.updatedAt.toString())}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -242,6 +267,10 @@ const styles = StyleSheet.create({
   },
   content: {
     color: "#555",
+  },
+  contentDate: {
+    color: "#888",
+    fontSize: 12,
   },
   noteItemList: {
     backgroundColor: "#f9f9f9",

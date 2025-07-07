@@ -72,6 +72,17 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const getGroupId = (groupId: string | null) => {
+    switch (groupId) {
+      case "all":
+      case "pinned":
+      case "locked":
+        return "all";
+      default:
+        return groupId as string;
+    }
+  }
+
   const handleSubmit = async (values: { title: string; content: string }) => {
     if (!user) {
       Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này.");
@@ -92,9 +103,11 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
         text1: "Thành công",
         text2: "Đã chỉnh sửa ghi chú!",
       });
-      navigation.reset({
+       //reset navigation to ListNotesScreen
+       navigation.reset(
+        {
         index: 0,
-        routes: [{ name: "Main" }],
+        routes: [{ name: "ListNotesScreen", params: { userId: user!.uid, groupId: getGroupId(selectedGroupId) } }],
       });
     } catch (error) {
       console.log(error);
@@ -127,7 +140,16 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
             values,
             errors,
             touched,
-          }) => (
+            dirty,
+          }) => {
+            // So sánh group và images với giá trị ban đầu
+            const isGroupChanged = selectedGroupId !== (note.groupId || null);
+            const isImagesChanged =
+              JSON.stringify(images) !== JSON.stringify(note.images || []);
+            const isChanged = dirty || isGroupChanged || isImagesChanged;
+        
+
+            return (
             <>
               <TextInput
                 style={styles.input}
@@ -227,9 +249,12 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                 color={Colors.primary600}
                 onPress={handleSubmit}
                 loading={loading}
+                disabled={!isChanged}
               />
             </>
-          )}
+          );
+          }
+          }
         </Formik>
       </ScrollView>
     </View>

@@ -27,10 +27,19 @@ export const signUpSchema = Yup.object({
 });
 
 export const createGroupSchema = Yup.object({
-  name: Yup.string().trim().required("Bắt buộc nhập"),
+  name: Yup.string()
+    .trim()
+    .required("Bắt buộc nhập")
+    .max(50, "Tối đa 50 ký tự"),
 });
 
 export const createNoteSchema = Yup.object({
-  title: Yup.string().trim().required("Bắt buộc nhập"),
-  content: Yup.string().trim().required("Bắt buộc nhập"),
+  title: Yup.string()
+    .trim()
+    .required("Bắt buộc nhập")
+    .max(50, "Tối đa 50 ký tự"),
+  content: Yup.string()
+    .trim()
+    .required("Bắt buộc nhập")
+    .max(5000, "Tối đa 5000 ký tự"),
 });

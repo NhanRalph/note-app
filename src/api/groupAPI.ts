@@ -5,7 +5,7 @@ import firestore, {
 export interface GroupType {
   id: string;
   name: string;
-  createdAt: FirebaseFirestoreTypes.Timestamp;
+  createdAt: FirebaseFirestoreTypes.Timestamp | string;
 }
 export const getGroups = async (
   userId: string,
@@ -19,7 +19,7 @@ export const getGroups = async (
     .collection("users")
     .doc(userId)
     .collection("groups")
-    .orderBy("createdAt", "asc")
+    .orderBy("createdAt", "desc")
     .limit(pageSize);
 
   if (lastCreatedAt) {
@@ -51,7 +51,7 @@ export const createGroup = async (userId: string, name: string) => {
     createdAt: firestore.FieldValue.serverTimestamp(),
   });
 
-  return { id: groupRef.id };
+  return { id: groupRef.id, name, createdAt: new Date().toISOString() };
 };
 
 export const updateGroup = async (

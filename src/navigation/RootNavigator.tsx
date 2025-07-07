@@ -13,6 +13,7 @@ import CreateGroup from "../screens/Group/CreateGroup";
 import UpdateGroupScreen from "../screens/Group/UpdateGroup";
 import HomeScreen from "../screens/Home/HomeScreen";
 import CreateNote from "../screens/Note/CreateNote";
+import ListNotesScreen from "../screens/Note/ListNotesScreen";
 import NoteDetailScreen from "../screens/Note/NoteDetailScreen";
 import UpdateNoteScreen from "../screens/Note/UpdateNote";
 import ProfileScreen from "../screens/Profile/ProfileScreen";
@@ -52,6 +53,9 @@ const RootNavigator = () => {
             <Stack.Screen name="Main" options={{ headerShown: false }}>
               {() => <CustomBottomTab tabs={userTabBarProps} />}
             </Stack.Screen>
+            
+            <Stack.Screen name="ListNotesScreen" component={ListNotesScreen} />
+
             <Stack.Screen name="CreateGroup" component={CreateGroup} />
             <Stack.Screen name="CreateNote" component={CreateNote} />
             <Stack.Screen name="NoteDetail" component={NoteDetailScreen} options={{ headerShown: false }} />

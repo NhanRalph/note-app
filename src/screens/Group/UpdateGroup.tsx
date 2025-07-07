@@ -81,6 +81,7 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
           values,
           errors,
           touched,
+          dirty,
         }) => (
           <>
             <TextInput
@@ -102,6 +103,7 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
               color={Colors.primary600}
               onPress={handleSubmit}
               loading={loadingGroup}
+              disabled={!dirty}
             />
           </>
         )}

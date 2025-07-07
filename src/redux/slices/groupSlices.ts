@@ -11,6 +11,7 @@ interface GroupState {
   loadingGroup: boolean;
   error: string | null;
   lastCreatedAt: string | null;
+  loadingMoreGroup: boolean;
   hasMoreGroup: boolean;
 }
 const initialState: GroupState = {
@@ -18,6 +19,7 @@ const initialState: GroupState = {
   loadingGroup: false,
   error: null,
   lastCreatedAt: null,
+  loadingMoreGroup: false,
   hasMoreGroup: true,
 };
 
@@ -50,16 +52,14 @@ export const getGroupsStore = createAsyncThunk(
     }
   }
 );
-
 export const createGroupStore = createAsyncThunk(
   "group/createGroup",
   async (
     { userId, name }: { userId: string; name: string },
-    { dispatch, rejectWithValue }
+    { rejectWithValue }
   ) => {
     try {
       const newGroup = await createGroup(userId, name);
-      dispatch(getGroupsStore({ userId, pageSize: 10, lastCreatedAt: null }));
       return newGroup;
     } catch (error: any) {
       return rejectWithValue(error.message || "Lỗi khi tạo nhóm");
@@ -75,11 +75,10 @@ export const updateGroupStore = createAsyncThunk(
       groupId,
       name,
     }: { userId: string; groupId: string; name: string },
-    { dispatch, rejectWithValue }
+    { rejectWithValue }
   ) => {
     try {
       await updateGroup(userId, groupId, name);
-      dispatch(getGroupsStore({ userId, pageSize: 10, lastCreatedAt: null }));
       return { id: groupId, name };
     } catch (error: any) {
       return rejectWithValue(error.message || "Lỗi khi cập nhật nhóm");
@@ -91,11 +90,10 @@ export const deleteGroupStore = createAsyncThunk(
   "group/deleteGroup",
   async (
     { userId, groupId }: { userId: string; groupId: string },
-    { dispatch, rejectWithValue }
+    { rejectWithValue }
   ) => {
     try {
       await deleteGroup(userId, groupId);
-      dispatch(getGroupsStore({ userId, pageSize: 10, lastCreatedAt: null }));
       return { id: groupId };
     } catch (error: any) {
       return rejectWithValue(error.message || "Lỗi khi xoá nhóm");
@@ -110,6 +108,8 @@ const groupSlice = createSlice({
     resetGroupState(state) {
       state.groups = [];
       state.lastCreatedAt = null;
+      state.loadingGroup = false;
+      state.loadingMoreGroup = false;
       state.hasMoreGroup = true;
       state.error = null;
     },
@@ -120,12 +120,17 @@ const groupSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Get Groups (pagination)
-      .addCase(getGroupsStore.pending, (state) => {
-        state.loadingGroup = true;
+      .addCase(getGroupsStore.pending, (state, action) => {
+        if (action.meta.arg.lastCreatedAt) {
+          state.loadingMoreGroup = true;
+        } else {
+          state.loadingGroup = true;
+        }
         state.error = null;
       })
       .addCase(getGroupsStore.fulfilled, (state, action) => {
         state.loadingGroup = false;
+        state.loadingMoreGroup = false;
 
         if (action.meta.arg.lastCreatedAt) {
           state.groups = [...state.groups, ...action.payload.groups];
@@ -138,6 +143,7 @@ const groupSlice = createSlice({
       })
       .addCase(getGroupsStore.rejected, (state, action) => {
         state.loadingGroup = false;
+        state.loadingMoreGroup = false;
         state.error = action.payload as string;
       })
 
@@ -146,10 +152,10 @@ const groupSlice = createSlice({
         state.loadingGroup = true;
         state.error = null;
       })
-      // .addCase(createGroupStore.fulfilled, (state, action) => {
-      //   state.loadingGroup = false;
-      //   state.groups = [action.payload, ...state.groups];
-      // })
+      .addCase(createGroupStore.fulfilled, (state, action) => {
+        state.loadingGroup = false;
+        state.groups.unshift(action.payload);
+      })
       .addCase(createGroupStore.rejected, (state, action) => {
         state.loadingGroup = false;
         state.error = action.payload as string;
