@@ -271,6 +271,14 @@ export default function HomeScreen() {
     }
   }, [selectedGroupId, debouncedKeyword, flag]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedKeyword(searchKeyword);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchKeyword]);
+
   const createGroup = () => {
     if (!user) {
       navigation.navigate("LoginScreen");
