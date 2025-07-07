@@ -5,6 +5,7 @@ import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
+import { getNoteStatsStore } from "@/src/redux/slices/groupSlices";
 import { createNoteSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
@@ -98,6 +99,8 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
         groupId: selectedGroupId,
       });
 
+dispatch(getNoteStatsStore({ userId: user!.uid }));
+
       Toast.show({
         type: "success",
         text1: "Thành công",
@@ -125,7 +128,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
       >
         <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
       </TouchableOpacity>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} nestedScrollEnabled>
         <Text style={styles.title}>Chỉnh sửa ghi chú</Text>
 
         <Formik
@@ -193,7 +196,8 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
               </TouchableOpacity>
 
               {dropdownVisible && (
-                <View style={styles.dropdownList}>
+                              <View style={[styles.dropdownList, { maxHeight: 200 }]}>
+                                <ScrollView nestedScrollEnabled>
                   <TouchableOpacity
                     style={styles.dropdownItem}
                     onPress={() => {
@@ -216,6 +220,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                       <Text>{group.name}</Text>
                     </TouchableOpacity>
                   ))}
+                  </ScrollView>
                 </View>
               )}
 

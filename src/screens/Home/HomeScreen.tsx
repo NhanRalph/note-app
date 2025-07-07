@@ -7,6 +7,7 @@ import { RootState } from "@/src/redux/rootReducer";
 import {
   deleteGroupStore,
   getGroupsStore,
+  getNoteStatsStore,
 } from "@/src/redux/slices/groupSlices";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
@@ -38,6 +39,7 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const {
     groups,
+    virtualGroups,
     error,
     lastCreatedAt,
     loadingGroup,
@@ -74,6 +76,12 @@ export default function HomeScreen() {
 
     setGroupsResult(filteredGroups);
   }, [debouncedKeyword]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    setGroupsResult(groups);
+  }, [groups]);
 
   //   if (!user) return;
 
@@ -151,6 +159,7 @@ export default function HomeScreen() {
         style: "destructive",
         onPress: () => {
           dispatch(deleteGroupStore({ userId: user!.uid, groupId }));
+dispatch(getNoteStatsStore({ userId: user!.uid }));
           handleCloseActions();
 
           Toast.show({
@@ -211,9 +220,7 @@ export default function HomeScreen() {
       ) : (
         <FlatList
           data={[
-            { id: "all", name: "Tất cả", createdAt: "" },
-            { id: "pinned", name: "Ghim", createdAt: "" },
-            { id: "locked", name: "Đã khoá", createdAt: "" },
+            ...virtualGroups,
             ...groupsResult,
           ]}
           key={viewMode}

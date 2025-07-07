@@ -14,6 +14,20 @@ export interface NoteType {
   updatedAt: string;
 }
 
+const updateNoteCount = async (
+  userId: string,
+  groupId: string,
+  increment: number
+) => {
+  if (!groupId) return;
+
+  await firestore()
+    .doc(`users/${userId}/groups/${groupId}`)
+    .update({
+      noteCount: firestore.FieldValue.increment(increment),
+    });
+};
+
 export const getNotes = async (
   userId: string,
   pageSize: number,
@@ -81,6 +95,7 @@ export const createNote = async (
   }
 ) => {
   const noteRef = firestore().collection(`users/${userId}/notes`).doc();
+
   await noteRef.set({
     ...data,
     images: data.images || [],
@@ -89,32 +104,115 @@ export const createNote = async (
     createdAt: firestore.FieldValue.serverTimestamp(),
     updatedAt: firestore.FieldValue.serverTimestamp(),
   });
+
+  if (data.groupId) {
+    await updateNoteCount(userId, data.groupId, 1);
+  }
+
   return noteRef.id;
 };
 
 export const updateNote = async (userId: string, noteId: string, data: any) => {
-  await firestore()
-    .doc(`users/${userId}/notes/${noteId}`)
-    .update({
-      ...data,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    });
+  const noteRef = firestore().doc(`users/${userId}/notes/${noteId}`);
+  const noteSnap = await noteRef.get();
+
+  if (!noteSnap.exists) {
+    throw new Error("Note không tồn tại");
+  }
+
+  let oldGroupId = noteSnap.data()?.groupId ?? null;
+  if (oldGroupId === "") oldGroupId = null;
+
+  let newGroupId = data.groupId ?? oldGroupId;
+  if (newGroupId === "") newGroupId = null;
+
+  const batch = firestore().batch();
+
+  // Nếu groupId thay đổi thì xử lý update noteCount
+  if (oldGroupId !== newGroupId) {
+    if (oldGroupId) {
+      const oldGroupRef = firestore().doc(
+        `users/${userId}/groups/${oldGroupId}`
+      );
+      batch.update(oldGroupRef, {
+        noteCount: firestore.FieldValue.increment(-1),
+      });
+    }
+
+    if (newGroupId) {
+      const newGroupRef = firestore().doc(
+        `users/${userId}/groups/${newGroupId}`
+      );
+      batch.update(newGroupRef, {
+        noteCount: firestore.FieldValue.increment(1),
+      });
+    }
+  }
+
+  batch.update(noteRef, {
+    ...data,
+    updatedAt: firestore.FieldValue.serverTimestamp(),
+  });
+
+  await batch.commit();
 };
 
 export const deleteNote = async (userId: string, noteId: string) => {
+  const noteSnap = await firestore()
+    .doc(`users/${userId}/notes/${noteId}`)
+    .get();
+
+  const noteData = noteSnap.data();
+  const groupId = noteData?.groupId || null;
+
   await firestore().doc(`users/${userId}/notes/${noteId}`).delete();
+
+  if (groupId) {
+    await updateNoteCount(userId, groupId, -1);
+  }
 };
 
 //move note to another group
 export const moveNoteToGroup = async (
   userId: string,
   noteId: string,
-  groupId: string | null
+  newGroupId: string | null
 ) => {
-  await firestore().doc(`users/${userId}/notes/${noteId}`).update({
-    groupId,
+  const noteRef = firestore().doc(`users/${userId}/notes/${noteId}`);
+  const noteSnap = await noteRef.get();
+
+  if (!noteSnap.exists) {
+    throw new Error("Note không tồn tại");
+  }
+
+  const noteData = noteSnap.data();
+  const oldGroupId = noteData?.groupId || null;
+
+  console.log("old", oldGroupId);
+  console.log("new", newGroupId);
+
+  const batch = firestore().batch();
+
+  if (oldGroupId && oldGroupId !== newGroupId) {
+    const oldGroupRef = firestore().doc(`users/${userId}/groups/${oldGroupId}`);
+    batch.update(oldGroupRef, {
+      noteCount: firestore.FieldValue.increment(-1),
+    });
+  }
+
+  if (newGroupId && oldGroupId !== newGroupId) {
+    const newGroupRef = firestore().doc(`users/${userId}/groups/${newGroupId}`);
+    batch.update(newGroupRef, {
+      noteCount: firestore.FieldValue.increment(1),
+    });
+  }
+
+  batch.update(noteRef, {
+    groupId: newGroupId,
     updatedAt: firestore.FieldValue.serverTimestamp(),
   });
+
+  await batch.commit();
 };
 
 //toggle pin

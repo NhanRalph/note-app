@@ -2,6 +2,7 @@ import {
   createGroup,
   deleteGroup,
   getGroups,
+  getNoteStats,
   GroupType,
   updateGroup,
 } from "@/src/api/groupAPI";
@@ -9,6 +10,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 interface GroupState {
   groups: GroupType[];
   loadingGroup: boolean;
+  virtualGroups: GroupType[];
   error: string | null;
   lastCreatedAt: string | null;
   loadingMoreGroup: boolean;
@@ -16,6 +18,11 @@ interface GroupState {
 }
 const initialState: GroupState = {
   groups: [],
+  virtualGroups: [
+    { id: "all", name: "Tất cả", createdAt: "", noteCount: 0 },
+    { id: "pinned", name: "Ghim", createdAt: "", noteCount: 0 },
+    { id: "locked", name: "Đã khoá", createdAt: "", noteCount: 0 },
+  ],
   loadingGroup: false,
   error: null,
   lastCreatedAt: null,
@@ -49,6 +56,18 @@ export const getGroupsStore = createAsyncThunk(
       };
     } catch (error: any) {
       return rejectWithValue(error.message || "Lỗi khi lấy nhóm");
+    }
+  }
+);
+
+export const getNoteStatsStore = createAsyncThunk(
+  "group/getNoteStats",
+  async ({ userId }: { userId: string }, { rejectWithValue }) => {
+    try {
+      const stats = await getNoteStats(userId);
+      return stats; // { all: x, pinned: y, locked: z }
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Lỗi khi lấy thống kê ghi chú");
     }
   }
 );
@@ -107,6 +126,11 @@ const groupSlice = createSlice({
   reducers: {
     resetGroupState(state) {
       state.groups = [];
+      state.virtualGroups = [
+        { id: "all", name: "Tất cả", createdAt: "", noteCount: 0 },
+        { id: "pinned", name: "Ghim", createdAt: "", noteCount: 0 },
+        { id: "locked", name: "Đã khoá", createdAt: "", noteCount: 0 },
+      ];
       state.lastCreatedAt = null;
       state.loadingGroup = false;
       state.loadingMoreGroup = false;
@@ -144,6 +168,25 @@ const groupSlice = createSlice({
       .addCase(getGroupsStore.rejected, (state, action) => {
         state.loadingGroup = false;
         state.loadingMoreGroup = false;
+        state.error = action.payload as string;
+      })
+
+      // Get Note Stats
+      .addCase(getNoteStatsStore.pending, (state) => {
+        state.loadingGroup = true;
+      })
+      .addCase(getNoteStatsStore.fulfilled, (state, action) => {
+        state.loadingGroup = false;
+        const { all, pinned, locked } = action.payload;
+
+        state.virtualGroups = [
+          { id: "all", name: "Tất cả", createdAt: "", noteCount: all },
+          { id: "pinned", name: "Ghim", createdAt: "", noteCount: pinned },
+          { id: "locked", name: "Đã khoá", createdAt: "", noteCount: locked },
+        ];
+      })
+      .addCase(getNoteStatsStore.rejected, (state, action) => {
+        state.loadingGroup = false;
         state.error = action.payload as string;
       })
 

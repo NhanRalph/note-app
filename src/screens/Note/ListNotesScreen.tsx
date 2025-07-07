@@ -9,9 +9,11 @@ import {
 } from "@/src/api/noteAPI";
 import NoteItem from "@/src/components/NoteItem/NoteItem";
 import Colors from "@/src/constants/Colors";
+import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
+import { getNoteStatsStore } from "@/src/redux/slices/groupSlices";
 import { Ionicons } from "@expo/vector-icons";
 import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 import { RouteProp } from "@react-navigation/native";
@@ -40,6 +42,7 @@ interface ListNotesScreenProps {
 const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   //use state
   const { userId, groupId } = route.params;
+    const dispatch = useAppDispatch();
 
   const [selectedGroupId, setSelectedGroupId] = useState<string>(groupId);
   const [selectedNoteActionId, setSelectedNoteActionId] = useState<
@@ -190,7 +193,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                 text1: "Thành công",
                 text2: "Đã ghim ghi chú",
               });
-              setFlag(!flag);
+              handleChangeFlag();
               setSelectedNoteActionId(null);
               setSelectedNote(null);
             } catch (error) {
@@ -228,7 +231,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
               text1: "Thành công",
               text2: "Đã xoá thành công!",
             });
-            setFlag(!flag);
+            handleChangeFlag();
             setSelectedNoteActionId(null);
             setSelectedNote(null);
           } catch (error) {
@@ -262,7 +265,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                     ? "Đã mở khoá ghi chú!"
                     : "Đã khoá ghi chú!",
                 });
-                setFlag(!flag);
+                handleChangeFlag();
                 setSelectedNoteActionId(null);
                 setSelectedNote(null);
               } catch (error) {
@@ -280,6 +283,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   };
 
   const handleChangeFlag = () => {
+    dispatch(getNoteStatsStore({ userId }));
     setFlag(!flag);
   };
 

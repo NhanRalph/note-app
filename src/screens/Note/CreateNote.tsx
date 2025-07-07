@@ -5,7 +5,7 @@ import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
-import { fetchNotes } from "@/src/redux/slices/noteSlices";
+import { getNoteStatsStore } from "@/src/redux/slices/groupSlices";
 import { createNoteSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
@@ -85,7 +85,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
       default:
         return groupId as string;
     }
-  }
+  };
 
   const handleSubmit = async (values: { title: string; content: string }) => {
     try {
@@ -98,7 +98,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
         groupId: selectedGroupId,
       });
 
-      dispatch(fetchNotes({ userId: userId }));
+      dispatch(getNoteStatsStore({ userId }));
 
       Toast.show({
         type: "success",
@@ -107,10 +107,14 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
       });
 
       //reset navigation to ListNotesScreen
-      navigation.reset(
-        {
+      navigation.reset({
         index: 0,
-        routes: [{ name: "ListNotesScreen", params: { userId, groupId: getGroupId(selectedGroupId) } }],
+        routes: [
+          {
+            name: "ListNotesScreen",
+            params: { userId, groupId: getGroupId(selectedGroupId) },
+          },
+        ],
       });
     } catch (error) {
       console.log(error);
@@ -128,7 +132,11 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
       >
         <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
       </TouchableOpacity>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+      >
         <Text style={styles.title}>Tạo ghi chú</Text>
 
         <Formik
@@ -187,29 +195,31 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
               </TouchableOpacity>
 
               {dropdownVisible && (
-                <View style={styles.dropdownList}>
-                  <TouchableOpacity
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSelectedGroupId(null);
-                      setDropdownVisible(false);
-                    }}
-                  >
-                    <Text>Không thuộc nhóm nào</Text>
-                  </TouchableOpacity>
-
-                  {groups.map((group) => (
+                <View style={[styles.dropdownList, { maxHeight: 200 }]}>
+                  <ScrollView nestedScrollEnabled>
                     <TouchableOpacity
-                      key={group.id}
                       style={styles.dropdownItem}
                       onPress={() => {
-                        setSelectedGroupId(group.id);
+                        setSelectedGroupId(null);
                         setDropdownVisible(false);
                       }}
                     >
-                      <Text>{group.name}</Text>
+                      <Text>Không thuộc nhóm nào</Text>
                     </TouchableOpacity>
-                  ))}
+
+                    {groups.map((group) => (
+                      <TouchableOpacity
+                        key={group.id}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setSelectedGroupId(group.id);
+                          setDropdownVisible(false);
+                        }}
+                      >
+                        <Text>{group.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               )}
 
@@ -317,6 +327,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: "#fff",
     elevation: 2,
+    maxHeight: 200, // Giới hạn chiều cao dropdown, tránh tràn
   },
   dropdownItem: {
     padding: 12,

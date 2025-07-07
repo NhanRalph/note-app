@@ -5,8 +5,26 @@ import firestore, {
 export interface GroupType {
   id: string;
   name: string;
+  noteCount: number;
   createdAt: FirebaseFirestoreTypes.Timestamp | string;
 }
+
+export const getNoteStats = async (userId: string) => {
+  const notesRef = firestore().collection(`users/${userId}/notes`);
+
+  const [allSnap, pinnedSnap, lockedSnap] = await Promise.all([
+    notesRef.get(),
+    notesRef.where("pinned", "==", true).get(),
+    notesRef.where("locked", "==", true).get(),
+  ]);
+
+  return {
+    all: allSnap.size,
+    pinned: pinnedSnap.size,
+    locked: lockedSnap.size,
+  };
+};
+
 export const getGroups = async (
   userId: string,
   pageSize: number,
@@ -33,6 +51,7 @@ export const getGroups = async (
     return {
       id: doc.id,
       name: data.name,
+      noteCount: data.noteCount || 0,
       createdAt:
         data.createdAt?.toDate().toISOString() || new Date().toISOString(),
     };
@@ -48,10 +67,16 @@ export const createGroup = async (userId: string, name: string) => {
   const groupRef = firestore().collection(`users/${userId}/groups`).doc();
   await groupRef.set({
     name,
+    noteCount: 0,
     createdAt: firestore.FieldValue.serverTimestamp(),
   });
 
-  return { id: groupRef.id, name, createdAt: new Date().toISOString() };
+  return {
+    id: groupRef.id,
+    name,
+    noteCount: 0,
+    createdAt: new Date().toISOString(),
+  };
 };
 
 export const updateGroup = async (
@@ -65,7 +90,6 @@ export const updateGroup = async (
 export const deleteGroup = async (userId: string, groupId: string) => {
   await firestore().doc(`users/${userId}/groups/${groupId}`).delete();
 
-  // Optional: Move notes về groupId null
   const notesSnap = await firestore()
     .collection(`users/${userId}/notes`)
     .where("groupId", "==", groupId)

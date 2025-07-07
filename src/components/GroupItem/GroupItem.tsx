@@ -82,16 +82,18 @@ Props) {
           <View
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
+            <View style={{ width: "80%" }}>
+              <Text numberOfLines={1} style={styles.title}>
+                {group.name}
+              </Text>
+            </View>
             <Text numberOfLines={1} style={styles.title}>
-              {group.name}
+              {group.noteCount}
             </Text>
           </View>
-      <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-        
-          <Text numberOfLines={1} style={styles.content}>
-            
-          </Text>
-      </View>
+          <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+            <Text numberOfLines={1} style={styles.content}></Text>
+          </View>
         </TouchableOpacity>
       );
     }
@@ -108,8 +110,13 @@ Props) {
           <View
             style={{ flexDirection: "row", justifyContent: "space-between" }}
           >
+            <View style={{ width: "80%" }}>
+              <Text numberOfLines={1} style={styles.title}>
+                {group.name}
+              </Text>
+            </View>
             <Text numberOfLines={1} style={styles.title}>
-              {group.name}
+              {group.noteCount}
             </Text>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
@@ -130,8 +137,13 @@ Props) {
       delayLongPress={300}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <View style={{ width: "80%" }}>
+          <Text numberOfLines={1} style={styles.title}>
+            {group.name}
+          </Text>
+        </View>
         <Text numberOfLines={1} style={styles.title}>
-          {group.name}
+          {group.noteCount}
         </Text>
       </View>
       <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
