@@ -1,0 +1,11 @@
+{
+  "react-native": {
+    "crashlytics_debug_enabled": true,
+    "crashlytics_auto_collection_enabled": true,
+    "analytics_auto_collection_enabled": true,
+    "performance_auto_collection_enabled": true,
+    "messaging_auto_init_enabled": true,
+    "remote_config_fetch_timeout": 60000,
+    "remote_config_min_fetch_interval": 3600000
+  }
+}

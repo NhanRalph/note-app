@@ -62,7 +62,10 @@ export default function HomeScreen() {
           pageSize: PAGE_SIZE,
           lastCreatedAt: null,
         })
+
+        
       );
+      dispatch(getNoteStatsStore({ userId: user.uid }));
     }
   }, [user]);
 

@@ -35,6 +35,7 @@ export const login = createAsyncThunk(
       const user = await loginWithEmail(email, password);
       return { uid: user.uid, email: user.email };
     } catch (error: any) {
+      console.log("Login error:", error);
       return rejectWithValue(error.message || "Đăng nhập thất bại");
     }
   }

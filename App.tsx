@@ -1,3 +1,4 @@
+import firebase from '@react-native-firebase/app';
 import React from 'react';
 import { SafeAreaView, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -7,6 +8,13 @@ import { PersistGate } from "redux-persist/integration/react";
 import Colors from './src/constants/Colors';
 import RootNavigator from './src/navigation';
 import store, { persistor } from './src/redux';
+
+
+if (!firebase.apps.length) {
+  console.log('Firebase chưa được khởi tạo');
+} else {
+  console.log('✅ Firebase đã được khởi tạo');
+}
 
 const App = () => {
   return (

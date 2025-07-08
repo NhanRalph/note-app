@@ -168,6 +168,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     marginRight: "2%",
+    // add shadow
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,  
+    },
+    shadowOpacity: 0.25,
+    elevation: 5,
   },
   title: {
     fontWeight: "bold",
