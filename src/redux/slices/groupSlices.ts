@@ -140,6 +140,108 @@ const groupSlice = createSlice({
     resetError(state) {
       state.error = null;
     },
+    changeNoteStats(
+      state,
+      action: {
+        payload: {
+          target: "all" | "pinned" | "locked";
+          type: "increment" | "decrement";
+        };
+      }
+    ) {
+      const { target, type } = action.payload;
+      state.virtualGroups = state.virtualGroups.map((group) => {
+        if (group.id === target) {
+          group.noteCount += type === "increment" ? 1 : -1;
+          group.noteCount = Math.max(0, group.noteCount);
+        }
+        return group;
+      });
+    },
+
+    // ✅ Tăng/giảm nhiều loại cùng lúc
+    batchChangeNoteStats(
+      state,
+      action: {
+        payload: {
+          target: "all" | "pinned" | "locked";
+          type: "increment" | "decrement";
+        }[];
+      }
+    ) {
+      action.payload.forEach(({ target, type }) => {
+        const group = state.virtualGroups.find((g) => g.id === target);
+        if (group) {
+          group.noteCount += type === "increment" ? 1 : -1;
+          group.noteCount = Math.max(0, group.noteCount);
+        }
+      });
+    },
+
+    // tăng / giảm nhiều pinned / locked truyền số vào
+    adjustNoteStatsFromUpdate(
+      state,
+      action: {
+        payload: {
+          allChange: number;
+          pinnedChange: number;
+          lockedChange: number;
+        };
+      }
+    ) {
+      const { allChange, pinnedChange, lockedChange } = action.payload;
+      const allGroup = state.virtualGroups.find((g) => g.id === "all");
+      if (allGroup) {
+        allGroup.noteCount += allChange;
+        allGroup.noteCount = Math.max(0, allGroup.noteCount);
+      }
+
+      const pinnedGroup = state.virtualGroups.find((g) => g.id === "pinned");
+      if (pinnedGroup) {
+        pinnedGroup.noteCount += pinnedChange;
+        pinnedGroup.noteCount = Math.max(0, pinnedGroup.noteCount);
+      }
+
+      const lockedGroup = state.virtualGroups.find((g) => g.id === "locked");
+      if (lockedGroup) {
+        lockedGroup.noteCount += lockedChange;
+        lockedGroup.noteCount = Math.max(0, lockedGroup.noteCount);
+      }
+    },
+
+    increaseNoteCount(state, action: { payload: { groupId: string } }) {
+      const { groupId } = action.payload;
+
+      // Tăng nhóm thực (groupId cụ thể)
+      const targetGroup = state.groups.find((g) => g.id === groupId);
+      if (targetGroup) {
+        targetGroup.noteCount += 1;
+      }
+
+      // Tăng nhóm ảo "all"
+      const allGroup = state.virtualGroups.find((g) => g.id === "all");
+      if (allGroup) {
+        allGroup.noteCount += 1;
+      }
+    },
+    moveNoteToAnotherGroup(
+      state,
+      action: { payload: { fromGroupId: string; toGroupId: string } }
+    ) {
+      const { fromGroupId, toGroupId } = action.payload;
+
+      // Giảm noteCount nhóm cũ
+      const fromGroup = state.groups.find((g) => g.id === fromGroupId);
+      if (fromGroup && fromGroup.noteCount > 0) {
+        fromGroup.noteCount -= 1;
+      }
+
+      // Tăng noteCount nhóm mới
+      const toGroup = state.groups.find((g) => g.id === toGroupId);
+      if (toGroup) {
+        toGroup.noteCount += 1;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -192,50 +294,58 @@ const groupSlice = createSlice({
 
       // Create Group
       .addCase(createGroupStore.pending, (state) => {
-        state.loadingGroup = true;
+        // state.loadingGroup = true;
         state.error = null;
       })
       .addCase(createGroupStore.fulfilled, (state, action) => {
-        state.loadingGroup = false;
+        // state.loadingGroup = false;
         state.groups.unshift(action.payload);
       })
       .addCase(createGroupStore.rejected, (state, action) => {
-        state.loadingGroup = false;
+        // state.loadingGroup = false;
         state.error = action.payload as string;
       })
 
       // Update Group
       .addCase(updateGroupStore.pending, (state) => {
-        state.loadingGroup = true;
+        // state.loadingGroup = true;
         state.error = null;
       })
       .addCase(updateGroupStore.fulfilled, (state, action) => {
-        state.loadingGroup = false;
+        // state.loadingGroup = false;
         const index = state.groups.findIndex((g) => g.id === action.payload.id);
         if (index !== -1) {
           state.groups[index].name = action.payload.name;
         }
       })
       .addCase(updateGroupStore.rejected, (state, action) => {
-        state.loadingGroup = false;
+        // state.loadingGroup = false;
         state.error = action.payload as string;
       })
 
       // Delete Group
       .addCase(deleteGroupStore.pending, (state) => {
-        state.loadingGroup = true;
+        // state.loadingGroup = true;
         state.error = null;
       })
       .addCase(deleteGroupStore.fulfilled, (state, action) => {
-        state.loadingGroup = false;
+        // state.loadingGroup = false;
         state.groups = state.groups.filter((g) => g.id !== action.payload.id);
       })
       .addCase(deleteGroupStore.rejected, (state, action) => {
-        state.loadingGroup = false;
+        // state.loadingGroup = false;
         state.error = action.payload as string;
       });
   },
 });
 
-export const { resetGroupState, resetError } = groupSlice.actions;
+export const {
+  resetGroupState,
+  resetError,
+  changeNoteStats,
+  batchChangeNoteStats,
+  adjustNoteStatsFromUpdate,
+  increaseNoteCount,
+  moveNoteToAnotherGroup,
+} = groupSlice.actions;
 export default groupSlice.reducer;

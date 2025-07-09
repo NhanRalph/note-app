@@ -1,11 +1,12 @@
-import { updateNote } from "@/src/api/noteAPI";
+import { NoteType, updateNote } from "@/src/api/noteAPI";
 import Button from "@/src/components/Button/Button";
 import Colors from "@/src/constants/Colors";
+import { useNoteContext } from "@/src/context/noteContext";
 import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
-import { getNoteStatsStore } from "@/src/redux/slices/groupSlices";
+import { getNoteStatsStore, moveNoteToAnotherGroup } from "@/src/redux/slices/groupSlices";
 import { createNoteSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
@@ -31,10 +32,11 @@ interface UpdateNoteScreenProps {
 
 const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
   const dispatch = useAppDispatch();
-  const note = route.params?.note;
+  const { note } = route.params;
   const navigation = useNavigation();
   const { groups } = useSelector((state: RootState) => state.group);
   const { user } = useSelector((state: RootState) => state.auth);
+  const { handleUpdateNote, handleDeleteNote} = useNoteContext();
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
     note.groupId || null
@@ -82,7 +84,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
       default:
         return groupId as string;
     }
-  }
+  };
 
   const handleSubmit = async (values: { title: string; content: string }) => {
     if (!user) {
@@ -99,19 +101,35 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
         groupId: selectedGroupId,
       });
 
-dispatch(getNoteStatsStore({ userId: user!.uid }));
+      // Tạo bản note mới (có thể thêm updatedAt hoặc fields khác)
+      const updatedNote: NoteType = {
+        ...note,
+        title: values.title,
+        content: values.content,
+        images,
+        groupId: selectedGroupId,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Gọi callback để update note tại màn hình cha
+      handleUpdateNote(updatedNote);
+
+      dispatch(getNoteStatsStore({ userId: user!.uid }));
+      if (selectedGroupId !== note.groupId) {
+        dispatch(moveNoteToAnotherGroup({
+          fromGroupId: getGroupId(note.groupId),
+          toGroupId: getGroupId(selectedGroupId),
+        }));
+
+        handleDeleteNote(note.id);
+      }
 
       Toast.show({
         type: "success",
         text1: "Thành công",
         text2: "Đã chỉnh sửa ghi chú!",
       });
-       //reset navigation to ListNotesScreen
-       navigation.reset(
-        {
-        index: 0,
-        routes: [{ name: "ListNotesScreen", params: { userId: user!.uid, groupId: getGroupId(selectedGroupId) } }],
-      });
+      navigation.goBack();
     } catch (error) {
       console.log(error);
       Alert.alert("Lỗi", "Không thể chỉnh sửa ghi chú.");
@@ -128,7 +146,11 @@ dispatch(getNoteStatsStore({ userId: user!.uid }));
       >
         <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
       </TouchableOpacity>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+      >
         <Text style={styles.title}>Chỉnh sửa ghi chú</Text>
 
         <Formik
@@ -150,116 +172,114 @@ dispatch(getNoteStatsStore({ userId: user!.uid }));
             const isImagesChanged =
               JSON.stringify(images) !== JSON.stringify(note.images || []);
             const isChanged = dirty || isGroupChanged || isImagesChanged;
-        
 
             return (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="Tiêu đề ghi chú"
-                placeholderTextColor="#999"
-                onChangeText={handleChange("title")}
-                onBlur={handleBlur("title")}
-                value={values.title}
-              />
-              {touched.title && errors.title && (
-                <Text style={styles.error}>{errors.title}</Text>
-              )}
-
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Nội dung ghi chú"
-                placeholderTextColor="#999"
-                onChangeText={handleChange("content")}
-                onBlur={handleBlur("content")}
-                value={values.content}
-                multiline
-                numberOfLines={10}
-                textAlignVertical="top"
-              />
-              {touched.content && errors.content && (
-                <Text style={styles.error}>{errors.content}</Text>
-              )}
-
-              <Text style={styles.label}>Nhóm</Text>
-
-              <TouchableOpacity
-                style={styles.dropdown}
-                onPress={() => setDropdownVisible((prev) => !prev)}
-              >
-                <Text style={styles.dropdownText}>{selectedGroupName}</Text>
-                <Ionicons
-                  name={dropdownVisible ? "chevron-up" : "chevron-down"}
-                  size={20}
-                  color="#333"
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Tiêu đề ghi chú"
+                  placeholderTextColor="#999"
+                  onChangeText={handleChange("title")}
+                  onBlur={handleBlur("title")}
+                  value={values.title}
                 />
-              </TouchableOpacity>
-
-              {dropdownVisible && (
-                              <View style={[styles.dropdownList, { maxHeight: 200 }]}>
-                                <ScrollView nestedScrollEnabled>
-                  <TouchableOpacity
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSelectedGroupId(null);
-                      setDropdownVisible(false);
-                    }}
-                  >
-                    <Text>Không thuộc nhóm nào</Text>
-                  </TouchableOpacity>
-
-                  {groups.map((group) => (
-                    <TouchableOpacity
-                      key={group.id}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setSelectedGroupId(group.id);
-                        setDropdownVisible(false);
-                      }}
-                    >
-                      <Text>{group.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                  </ScrollView>
-                </View>
-              )}
-
-              <Text style={styles.label}>Hình ảnh ({images.length}/5)</Text>
-
-              <View style={styles.imageContainer}>
-                {images.map((uri, index) => (
-                  <View key={index} style={styles.imageWrapper}>
-                    <Image source={{ uri }} style={styles.image} />
-                    <TouchableOpacity
-                      style={styles.removeBtn}
-                      onPress={() => handleRemoveImage(index)}
-                    >
-                      <Ionicons name="close" size={16} color="#fff" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-                {images.length < 5 && (
-                  <TouchableOpacity
-                    style={styles.addImageBtn}
-                    onPress={handlePickImage}
-                  >
-                    <Ionicons name="add" size={24} color="#666" />
-                  </TouchableOpacity>
+                {touched.title && errors.title && (
+                  <Text style={styles.error}>{errors.title}</Text>
                 )}
-              </View>
 
-              <Button
-                title="Chỉnh sửa"
-                size="large"
-                color={Colors.primary600}
-                onPress={handleSubmit}
-                loading={loading}
-                disabled={!isChanged}
-              />
-            </>
-          );
-          }
-          }
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Nội dung ghi chú"
+                  placeholderTextColor="#999"
+                  onChangeText={handleChange("content")}
+                  onBlur={handleBlur("content")}
+                  value={values.content}
+                  multiline
+                  numberOfLines={10}
+                  textAlignVertical="top"
+                />
+                {touched.content && errors.content && (
+                  <Text style={styles.error}>{errors.content}</Text>
+                )}
+
+                <Text style={styles.label}>Nhóm</Text>
+
+                <TouchableOpacity
+                  style={styles.dropdown}
+                  onPress={() => setDropdownVisible((prev) => !prev)}
+                >
+                  <Text style={styles.dropdownText}>{selectedGroupName}</Text>
+                  <Ionicons
+                    name={dropdownVisible ? "chevron-up" : "chevron-down"}
+                    size={20}
+                    color="#333"
+                  />
+                </TouchableOpacity>
+
+                {dropdownVisible && (
+                  <View style={[styles.dropdownList, { maxHeight: 200 }]}>
+                    <ScrollView nestedScrollEnabled>
+                      <TouchableOpacity
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setSelectedGroupId(null);
+                          setDropdownVisible(false);
+                        }}
+                      >
+                        <Text>Không thuộc nhóm nào</Text>
+                      </TouchableOpacity>
+
+                      {groups.map((group) => (
+                        <TouchableOpacity
+                          key={group.id}
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setSelectedGroupId(group.id);
+                            setDropdownVisible(false);
+                          }}
+                        >
+                          <Text>{group.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+
+                <Text style={styles.label}>Hình ảnh ({images.length}/5)</Text>
+
+                <View style={styles.imageContainer}>
+                  {images.map((uri, index) => (
+                    <View key={index} style={styles.imageWrapper}>
+                      <Image source={{ uri }} style={styles.image} />
+                      <TouchableOpacity
+                        style={styles.removeBtn}
+                        onPress={() => handleRemoveImage(index)}
+                      >
+                        <Ionicons name="close" size={16} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  {images.length < 5 && (
+                    <TouchableOpacity
+                      style={styles.addImageBtn}
+                      onPress={handlePickImage}
+                    >
+                      <Ionicons name="add" size={24} color="#666" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <Button
+                  title="Chỉnh sửa"
+                  size="large"
+                  color={Colors.primary600}
+                  onPress={handleSubmit}
+                  loading={loading}
+                  disabled={!isChanged}
+                />
+              </>
+            );
+          }}
         </Formik>
       </ScrollView>
     </View>

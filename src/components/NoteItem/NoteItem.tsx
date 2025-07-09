@@ -1,16 +1,14 @@
 import {
-  deleteNote,
-  NoteType,
-  toggleLockNote,
-  togglePinNote,
+  NoteType
 } from "@/src/api/noteAPI";
 import Colors from "@/src/constants/Colors";
+import { useNoteContext } from "@/src/context/noteContext";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootState } from "@/src/redux/rootReducer";
 import { formatDate } from "@/src/utils/formatDate";
 import { Ionicons } from "@expo/vector-icons";
 import { useRef } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import { useSelector } from "react-redux";
 
@@ -19,6 +17,10 @@ type Props = {
   viewMode: "list" | "grid";
   changeFlag: () => void;
   onLongPressNote?: () => void;
+  handlePinNote: (note: NoteType) => void;
+  handleEdit: (note: NoteType) => void;
+  handleDelete: (note: NoteType) => void;
+  handleLock: (note: NoteType) => void;
   handleUnSelectItem?: () => void;
   setOpenedSwipeRef?: (ref: Swipeable | null) => void;
 };
@@ -28,122 +30,43 @@ export default function NoteItem({
   viewMode,
   changeFlag,
   onLongPressNote,
+  handlePinNote,
+  handleEdit,
+  handleDelete,
+  handleLock,
   handleUnSelectItem,
   setOpenedSwipeRef,
 }: Props) {
   const navigation = useNavigation();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { handleSetSelectedNote } = useNoteContext();
   // Handle note click
   const handleNoteClick = () => {
     // Navigate to note detail screen
+    handleSetSelectedNote(note);
     navigation.navigate("NoteDetail", { note });
   };
   const swipeableRef = useRef<any>(null);
-
-  const handlePinNote = (note: NoteType) => {
-    Alert.alert(
-      "Ghim ghi chú",
-      note.pinned
-        ? "Bạn có muốn bỏ ghim ghi chú này không?"
-        : "Bạn có muốn ghim ghi chú này không?",
-      [
-        { text: "Huỷ", style: "cancel" },
-        {
-          text: note.pinned ? "Bỏ ghim" : "Ghim",
-          onPress: async () => {
-            try {
-              // Call pin API here
-              await togglePinNote(user!.uid, note.id, !note.pinned);
-              Alert.alert("Thành công", "Đã ghim ghi chú!");
-              changeFlag();
-              swipeableRef.current?.close();
-            } catch (error) {
-              console.error("Error pinning note:", error);
-              Alert.alert(
-                "Lỗi",
-                "Không thể ghim ghi chú. Vui lòng thử lại sau."
-              );
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleEdit = () => {
-    navigation.navigate("UpdateNote", { note });
-  };
-
-  const handleDelete = () => {
-    Alert.alert("Xoá ghi chú", "Bạn có chắc chắn muốn xoá ghi chú này không?", [
-      { text: "Huỷ", style: "cancel" },
-      {
-        text: "Xoá",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            // Call delete API here
-            await deleteNote(user!.uid, note.id);
-            Alert.alert("Thành công", "Đã xoá ghi chú!");
-            changeFlag();
-            swipeableRef.current?.close();
-          } catch (error) {
-            console.error("Error deleting note:", error);
-            Alert.alert("Lỗi", "Không thể xoá ghi chú. Vui lòng thử lại sau.");
-          }
-        },
-      },
-    ]);
-  };
-
-  const handleLock = () => {
-    Alert.alert(
-      note.locked ? "Mở khoá ghi chú" : "Khoá ghi chú",
-      note.locked
-        ? "Bạn có muốn mở khoá ghi chú này không?"
-        : "Bạn có muốn khoá ghi chú này không?",
-      [
-        { text: "Huỷ", style: "cancel" },
-        {
-          text: note.locked ? "Mở khoá" : "Khoá",
-          onPress: async () => {
-            {
-              try {
-                // Call lock/unlock API here
-                await toggleLockNote(user!.uid, note.id, !note.locked);
-                Alert.alert(
-                  "Thành công",
-                  note.locked ? "Đã mở khoá ghi chú!" : "Đã khoá ghi chú!"
-                );
-                changeFlag();
-                swipeableRef.current?.close();
-              } catch (error) {
-                console.error("Error locking/unlocking note:", error);
-                Alert.alert(
-                  "Lỗi",
-                  "Không thể thực hiện thao tác. Vui lòng thử lại sau."
-                );
-              }
-            }
-          },
-        },
-      ]
-    );
-  };
 
   if (viewMode === "list") {
     const renderRightActions = () => (
       <View style={styles.actionsRow}>
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: "#a855f7" }]}
-          onPress={() => handlePinNote(note)}
+          onPress={() => {
+            handlePinNote(note)
+            swipeableRef.current?.close();
+          }}
         >
           <Ionicons name="bookmark" size={20} color="#fff" />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: "#4b5563" }]}
-          onPress={handleLock}
+          onPress={() => {
+            handleLock(note)
+            swipeableRef.current?.close();
+          }}
         >
           {note.locked ? (
             <Ionicons name="lock-open" size={20} color="#fff" />
@@ -155,7 +78,10 @@ export default function NoteItem({
         {!note.locked && (
           <TouchableOpacity
             style={[styles.actionBtn, { backgroundColor: "#4b7bec" }]}
-            onPress={handleEdit}
+            onPress={() => {
+              handleEdit(note)
+              swipeableRef.current?.close();
+            }}
           >
             <Ionicons name="pencil" size={20} color="#fff" />
           </TouchableOpacity>
@@ -164,7 +90,10 @@ export default function NoteItem({
         {!note.locked && (
           <TouchableOpacity
             style={[styles.actionBtn, { backgroundColor: "#EF4444" }]}
-            onPress={handleDelete}
+            onPress={() => {
+              handleDelete(note)
+              swipeableRef.current?.close();
+            }}
           >
             <Ionicons name="trash" size={20} color="#fff" />
           </TouchableOpacity>

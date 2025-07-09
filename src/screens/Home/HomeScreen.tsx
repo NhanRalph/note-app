@@ -1,13 +1,14 @@
-import { GroupType } from "@/src/api/groupAPI";
+import { getGroupNoteStats, GroupType } from "@/src/api/groupAPI";
 import GroupItem from "@/src/components/GroupItem/GroupItem";
 import Colors from "@/src/constants/Colors";
 import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootState } from "@/src/redux/rootReducer";
 import {
+  adjustNoteStatsFromUpdate,
   deleteGroupStore,
   getGroupsStore,
-  getNoteStatsStore,
+  getNoteStatsStore
 } from "@/src/redux/slices/groupSlices";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
@@ -180,9 +181,16 @@ export default function HomeScreen() {
       {
         text: "Xoá",
         style: "destructive",
-        onPress: () => {
+        onPress: async () => {
+          const resStats = await getGroupNoteStats(user!.uid, groupId);
+          
           dispatch(deleteGroupStore({ userId: user!.uid, groupId }));
-          dispatch(getNoteStatsStore({ userId: user!.uid }));
+          dispatch(adjustNoteStatsFromUpdate({
+            allChange: -resStats.all,
+            pinnedChange: -resStats.pinned,
+            lockedChange: -resStats.locked,
+          }));
+          // dispatch(getNoteStatsStore({ userId: user!.uid }));
 
           Toast.show({
             type: "success",

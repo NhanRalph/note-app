@@ -87,17 +87,46 @@ export const updateGroup = async (
   await firestore().doc(`users/${userId}/groups/${groupId}`).update({ name });
 };
 
+//delete group to delete all notes in group
 export const deleteGroup = async (userId: string, groupId: string) => {
-  await firestore().doc(`users/${userId}/groups/${groupId}`).delete();
-
-  const notesSnap = await firestore()
+  const groupRef = firestore().doc(`users/${userId}/groups/${groupId}`);
+  const notesRef = firestore()
     .collection(`users/${userId}/notes`)
-    .where("groupId", "==", groupId)
-    .get();
+    .where("groupId", "==", groupId);
 
   const batch = firestore().batch();
+  batch.delete(groupRef);
+
+  const notesSnap = await notesRef.get();
   notesSnap.forEach((doc) => {
-    batch.update(doc.ref, { groupId: null });
+    batch.delete(doc.ref);
   });
+
   await batch.commit();
+};
+
+//get quantity of notes has been pinned, locked in a group
+export const getGroupNoteStats = async (
+  userId: string,
+  groupId: string
+): Promise<{
+  all: number;
+  pinned: number;
+  locked: number;
+}> => {
+  const notesRef = firestore()
+    .collection(`users/${userId}/notes`)
+    .where("groupId", "==", groupId);
+
+  const [allSnap, pinnedSnap, lockedSnap] = await Promise.all([
+    notesRef.get(),
+    notesRef.where("pinned", "==", true).get(),
+    notesRef.where("locked", "==", true).get(),
+  ]);
+
+  return {
+    all: allSnap.size,
+    pinned: pinnedSnap.size,
+    locked: lockedSnap.size,
+  };
 };

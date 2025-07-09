@@ -56,14 +56,20 @@ Props) {
       <View style={styles.actionsRow}>
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: "#4b7bec" }]}
-          onPress={() => handleEdit(group.id)}
+          onPress={() => {
+            handleEdit(group.id);
+            swipeableRef.current?.close();
+          }}
         >
           <Ionicons name="pencil" size={20} color="#fff" />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: "#EF4444" }]}
-          onPress={() => handleDelete(group.id)}
+          onPress={() => {
+            handleDelete(group.id);
+            swipeableRef.current?.close();
+          }}
         >
           <Ionicons name="trash" size={20} color="#fff" />
         </TouchableOpacity>
@@ -172,7 +178,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,  
+      height: 2,
     },
     shadowOpacity: 0.25,
     elevation: 5,

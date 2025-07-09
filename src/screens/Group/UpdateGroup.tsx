@@ -52,10 +52,7 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
       text1: "Thành công",
       text2: "Đã chỉnh sửa thành công!",
     });
-    navigation.reset({
-      index: 0,
-      routes: [{ name: "Main" }],
-    });
+    navigation.goBack();
   };
 
   return (

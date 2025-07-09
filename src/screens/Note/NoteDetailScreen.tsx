@@ -1,11 +1,9 @@
 import { deleteNote, toggleLockNote } from "@/src/api/noteAPI";
 import Colors from "@/src/constants/Colors";
+import { useNoteContext } from "@/src/context/noteContext";
 import { useNavigation } from "@/src/hook/useNavigation";
-import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
 import { Ionicons } from "@expo/vector-icons";
-import { RouteProp, useRoute } from "@react-navigation/native";
-import { useState } from "react";
 import {
   Alert,
   Image,
@@ -15,25 +13,28 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
 
-type NoteDetailRouteProp = RouteProp<RootStackParamList, "NoteDetail">;
-
 export default function NoteDetailScreen() {
-  const route = useRoute<NoteDetailRouteProp>();
   const navigation = useNavigation();
   const { groups } = useSelector((state: RootState) => state.group);
   const { user } = useSelector((state: RootState) => state.auth);
-  const { note } = route.params;
+  // const { note } = route.params;
+  const { selectedNote, handleUpdateNote, handleDeleteNote } = useNoteContext();
 
-  const [localNote, setLocalNote] = useState(note);
+  if (!selectedNote) {
+    Alert.alert("Lỗi", "Không tìm thấy ghi chú. Vui lòng thử lại sau.");
+    navigation.goBack();
+    return null;
+  }
   const selectedGroupName =
-    note.groupId === null
+    selectedNote.groupId === null
       ? "Không thuộc nhóm nào"
-      : groups.find((g) => g.id === note.groupId)?.name || "Không rõ";
+      : groups.find((g) => g.id === selectedNote.groupId)?.name || "Không rõ";
 
   const handleEdit = () => {
-    navigation.navigate("UpdateNote", { note });
+    navigation.navigate("UpdateNote", { note: selectedNote });
   };
 
   const handleDelete = () => {
@@ -45,12 +46,14 @@ export default function NoteDetailScreen() {
         onPress: async () => {
           try {
             // Call delete API here
-            await deleteNote(user!.uid, note.id);
-            Alert.alert("Thành công", "Đã xoá ghi chú!");
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Main" }],
+            await deleteNote(user!.uid, selectedNote.id);
+            Toast.show({
+              type: "success",
+              text1: "Thành công",
+              text2: "Đã xoá ghi chú",
             });
+            handleDeleteNote(selectedNote.id);
+            navigation.goBack();
           } catch (error) {
             console.error("Error deleting note:", error);
             Alert.alert("Lỗi", "Không thể xoá ghi chú. Vui lòng thử lại sau.");
@@ -62,24 +65,33 @@ export default function NoteDetailScreen() {
 
   const handleLock = () => {
     Alert.alert(
-      note.locked ? "Mở khoá ghi chú" : "Khoá ghi chú",
-      note.locked
+      selectedNote.locked ? "Mở khoá ghi chú" : "Khoá ghi chú",
+      selectedNote.locked
         ? "Bạn có muốn mở khoá ghi chú này không?"
         : "Bạn có muốn khoá ghi chú này không?",
       [
         { text: "Huỷ", style: "cancel" },
         {
-          text: note.locked ? "Mở khoá" : "Khoá",
+          text: selectedNote.locked ? "Mở khoá" : "Khoá",
           onPress: async () => {
             {
               try {
                 // Call lock/unlock API here
-                await toggleLockNote(user!.uid, note.id, !note.locked);
+                await toggleLockNote(
+                  user!.uid,
+                  selectedNote.id,
+                  !selectedNote.locked
+                );
                 Alert.alert(
                   "Thành công",
-                  note.locked ? "Đã mở khoá ghi chú!" : "Đã khoá ghi chú!"
+                  selectedNote.locked
+                    ? "Đã mở khoá ghi chú!"
+                    : "Đã khoá ghi chú!"
                 );
-                setLocalNote({ ...localNote, locked: !localNote.locked });
+                handleUpdateNote({
+                  ...selectedNote,
+                  locked: !selectedNote.locked,
+                });
               } catch (error) {
                 console.error("Error locking/unlocking note:", error);
                 Alert.alert(
@@ -109,13 +121,13 @@ export default function NoteDetailScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Title */}
-        <Text style={styles.title}>{localNote.title}</Text>
+        <Text style={styles.title}>{selectedNote.title}</Text>
 
         <Text style={styles.groupText}>Nhóm: {selectedGroupName}</Text>
 
         {/* Icons */}
         <View style={styles.iconRow}>
-          {localNote.pinned && (
+          {selectedNote.pinned && (
             <Ionicons
               name="bookmark"
               size={20}
@@ -123,7 +135,7 @@ export default function NoteDetailScreen() {
               style={styles.icon}
             />
           )}
-          {localNote.locked && (
+          {selectedNote.locked && (
             <Ionicons
               name="lock-closed"
               size={20}
@@ -134,17 +146,17 @@ export default function NoteDetailScreen() {
         </View>
 
         {/* Content */}
-        <Text style={styles.content}>{localNote.content}</Text>
+        <Text style={styles.content}>{selectedNote.content}</Text>
 
         {/* Images */}
-        {localNote.images && localNote.images.length > 0 && (
+        {selectedNote.images && selectedNote.images.length > 0 && (
           <>
             <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 8 }}>
               Hình ảnh:
             </Text>
             <View style={styles.imageContainer}>
               {/* Label "Hình ảnh" */}
-              {localNote.images.map((img, index) => (
+              {selectedNote.images.map((img, index) => (
                 <Image key={index} source={{ uri: img }} style={styles.image} />
               ))}
             </View>
@@ -154,12 +166,12 @@ export default function NoteDetailScreen() {
 
       {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>
-        {!localNote.locked && (
+        {!selectedNote.locked && (
           <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
             <Text style={styles.actionButtonText}>Chỉnh sửa</Text>
           </TouchableOpacity>
         )}
-        {!localNote.locked && (
+        {!selectedNote.locked && (
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: "#e74c3c" }]}
             onPress={handleDelete}
@@ -172,7 +184,7 @@ export default function NoteDetailScreen() {
           onPress={handleLock}
         >
           <Text style={styles.actionButtonText}>
-            {localNote.locked ? "Mở khoá" : "Khoá"}
+            {selectedNote.locked ? "Mở khoá" : "Khoá"}
           </Text>
         </TouchableOpacity>
       </View>

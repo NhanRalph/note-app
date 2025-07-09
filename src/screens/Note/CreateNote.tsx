@@ -1,11 +1,12 @@
 import { createNote } from "@/src/api/noteAPI";
 import Button from "@/src/components/Button/Button";
 import Colors from "@/src/constants/Colors";
+import { useNoteContext } from "@/src/context/noteContext";
 import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
-import { getNoteStatsStore } from "@/src/redux/slices/groupSlices";
+import { increaseNoteCount } from "@/src/redux/slices/groupSlices";
 import { createNoteSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
@@ -43,6 +44,8 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const {handleAddNote} = useNoteContext();
 
   const selectedGroupName =
     selectedGroupId === null ||
@@ -89,16 +92,22 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
   const handleSubmit = async (values: { title: string; content: string }) => {
     try {
+      if (selectedGroupId === null) {
+        Alert.alert("Thông báo", "Vui lòng chọn nhóm cho ghi chú.");
+        return;
+      }
       setLoading(true);
 
-      await createNote(userId, {
+      const res = await createNote(userId, {
         title: values.title,
         content: values.content,
         images,
         groupId: selectedGroupId,
       });
 
-      dispatch(getNoteStatsStore({ userId }));
+      dispatch(increaseNoteCount({ groupId: selectedGroupId }));
+
+      handleAddNote(res)
 
       Toast.show({
         type: "success",
@@ -107,15 +116,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
       });
 
       //reset navigation to ListNotesScreen
-      navigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: "ListNotesScreen",
-            params: { userId, groupId: getGroupId(selectedGroupId) },
-          },
-        ],
-      });
+      navigation.goBack();
     } catch (error) {
       console.log(error);
       Alert.alert("Lỗi", "Không thể tạo ghi chú.");

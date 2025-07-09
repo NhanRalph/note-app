@@ -96,7 +96,7 @@ export const createNote = async (
 ) => {
   const noteRef = firestore().collection(`users/${userId}/notes`).doc();
 
-  await noteRef.set({
+  const res = await noteRef.set({
     ...data,
     images: data.images || [],
     locked: false,
@@ -109,7 +109,20 @@ export const createNote = async (
     await updateNoteCount(userId, data.groupId, 1);
   }
 
-  return noteRef.id;
+  //return note type
+  const noteData = {
+    id: noteRef.id,
+    title: data.title,
+    content: data.content,
+    images: data.images || [],
+    groupId: data.groupId || null,
+    locked: false,
+    pinned: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return noteData;
 };
 
 export const updateNote = async (userId: string, noteId: string, data: any) => {

@@ -9,6 +9,7 @@ import {
 } from "@/src/api/noteAPI";
 import NoteItem from "@/src/components/NoteItem/NoteItem";
 import Colors from "@/src/constants/Colors";
+import { useNoteContext } from "@/src/context/noteContext";
 import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
@@ -60,7 +61,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   >(undefined);
   const [hasMore, setHasMore] = useState(true);
 
-  const [notes, setNotes] = useState<NoteType[]>([]);
+  const {notes, setNotes, handleUpdateNote, handleDeleteNote, handleSetNotes, handleSetSelectedNote} = useNoteContext();
   const [flag, setFlag] = useState(false);
 
   const navigation = useNavigation();
@@ -69,6 +70,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [sortedNotes, setSortedNotes] = useState<NoteType[]>([]);
 
   const [openedSwipeRef, setOpenedSwipeRef] = useState<Swipeable | null>(null);
   const fetchNotesByType = async (params: {
@@ -109,9 +111,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         );
       }
 
-      setNotes(
-        params.reset ? response.notes : (prev) => [...prev, ...response.notes]
-      );
+      setNotes(response.notes);
       setLastDoc(response.lastVisible);
       setHasMore(response.notes.length >= PAGE_SIZE);
     } catch (error) {
@@ -154,12 +154,27 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         reset: true,
       });
     }
-  }
-
+  };
 
   useEffect(() => {
     fetch(groupId);
-  }, [selectedGroupId, debouncedKeyword, flag, groupId]);
+  }, [selectedGroupId, debouncedKeyword, groupId]);
+
+  //sort notes by pinned,locked, updateAt
+  useEffect(() => {
+
+    // Sắp xếp ghi chú theo pinned, locked và thời gian cập nhật
+    const sorted = [...notes].sort((a, b) => {
+      if (a.pinned !== b.pinned) {
+        return a.pinned ? -1 : 1; // Ghim lên đầu
+      }
+      if (a.locked !== b.locked) {
+        return a.locked ? 1 : -1; // Khoá xuống dưới
+      }
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(); // Sắp xếp theo thời gian cập nhật
+    });
+    setSortedNotes(sorted);
+  }, [notes, flag]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -202,6 +217,11 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
               // Call pin API here
               await togglePinNote(user!.uid, note.id, !note.pinned);
 
+              handleUpdateNote({
+                ...note,
+                pinned: !note.pinned,
+              });
+
               Toast.show({
                 type: "success",
                 text1: "Thành công",
@@ -223,10 +243,12 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
   const handleEditNote = (note: NoteType) => {
     handleUnSelectItem();
-    navigation.navigate("UpdateNote", { note });
+    navigation.navigate("UpdateNote", {
+      note,
+    });
   };
 
-  const handleDeleteNote = (note: NoteType) => {
+  const handleDelete = (note: NoteType) => {
     handleUnSelectItem();
     Alert.alert("Xoá ghi chú", "Bạn có chắc chắn muốn xoá ghi chú này không?", [
       { text: "Huỷ", style: "cancel", onPress: () => handleSelectItem(note) },
@@ -237,6 +259,8 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
           try {
             // Call delete API here
             await deleteNote(user!.uid, note.id);
+
+            handleDeleteNote(note.id);
 
             Toast.show({
               type: "success",
@@ -269,6 +293,12 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
               try {
                 // Call lock/unlock API here
                 await toggleLockNote(user!.uid, note.id, !note.locked);
+
+                handleUpdateNote({
+                  ...note,
+                  locked: !note.locked,
+                });
+                
                 Toast.show({
                   type: "success",
                   text1: "Thành công",
@@ -295,7 +325,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
   const handleChangeFlag = () => {
     dispatch(getNoteStatsStore({ userId }));
-    setFlag(!flag);
+    // setFlag(!flag);
   };
 
   const handlePressOutside = () => {
@@ -319,9 +349,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   };
 
   const handleHome = () => {
-    navigation.navigate("Main", {
-      screen: "Home",
-    });
+    navigation.goBack();
   };
 
   return (
@@ -370,7 +398,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
       ) : (
         <TouchableWithoutFeedback onPress={handlePressOutside}>
           <FlatList
-            data={notes}
+            data={sortedNotes}
             key={viewMode}
             numColumns={viewMode === "grid" ? 2 : 1}
             keyExtractor={(item) => item.id}
@@ -382,6 +410,10 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                 onLongPressNote={() => {
                   handleSelectItem(item);
                 }}
+                handlePinNote={handlePinNote}
+                handleEdit={handleEditNote}
+                handleDelete={handleDelete}
+                handleLock={handleLockNote}
                 handleUnSelectItem={handleUnSelectItem}
                 setOpenedSwipeRef={setOpenedSwipeRef}
               />
@@ -503,7 +535,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
               {!selectedNote.locked && (
                 <TouchableOpacity
                   style={[styles.actionBtn, { backgroundColor: "#EF444415" }]}
-                  onPress={() => handleDeleteNote(selectedNote)}
+                  onPress={() => handleDelete(selectedNote)}
                 >
                   <Text style={[styles.actionText, { color: "#EF4444" }]}>
                     <Ionicons name="trash" size={14} color={"#EF4444"} /> Xoá
