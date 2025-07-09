@@ -19,6 +19,7 @@ type Props = {
   viewMode: "list" | "grid";
   changeFlag: () => void;
   onLongPressNote?: () => void;
+  handleUnSelectItem?: () => void;
   setOpenedSwipeRef?: (ref: Swipeable | null) => void;
 };
 
@@ -27,6 +28,7 @@ export default function NoteItem({
   viewMode,
   changeFlag,
   onLongPressNote,
+  handleUnSelectItem,
   setOpenedSwipeRef,
 }: Props) {
   const navigation = useNavigation();

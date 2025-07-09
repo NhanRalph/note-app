@@ -24,6 +24,7 @@ import {
   FlatList,
   Keyboard,
   Modal,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
@@ -42,7 +43,7 @@ interface ListNotesScreenProps {
 const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   //use state
   const { userId, groupId } = route.params;
-    const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
 
   const [selectedGroupId, setSelectedGroupId] = useState<string>(groupId);
   const [selectedNoteActionId, setSelectedNoteActionId] = useState<
@@ -67,6 +68,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const [openedSwipeRef, setOpenedSwipeRef] = useState<Swipeable | null>(null);
   const fetchNotesByType = async (params: {
@@ -120,7 +122,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
     }
   };
 
-  useEffect(() => {
+  const fetch = (groupId: string) => {
     if (!user) return;
 
     if (groupId === "all") {
@@ -152,6 +154,11 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         reset: true,
       });
     }
+  }
+
+
+  useEffect(() => {
+    fetch(groupId);
   }, [selectedGroupId, debouncedKeyword, flag, groupId]);
 
   useEffect(() => {
@@ -161,6 +168,12 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
     return () => clearTimeout(timer);
   }, [searchKeyword]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    fetch(groupId);
+    setRefreshing(false);
+  };
 
   const createNote = () => {
     if (!user) {
@@ -174,13 +187,14 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   };
 
   const handlePinNote = (note: NoteType) => {
+    handleUnSelectItem();
     Alert.alert(
       "Ghim ghi chú",
       note.pinned
         ? "Bạn có muốn bỏ ghim ghi chú này không?"
         : "Bạn có muốn ghim ghi chú này không?",
       [
-        { text: "Huỷ", style: "cancel" },
+        { text: "Huỷ", style: "cancel", onPress: () => handleSelectItem(note) },
         {
           text: note.pinned ? "Bỏ ghim" : "Ghim",
           onPress: async () => {
@@ -194,8 +208,6 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                 text2: "Đã ghim ghi chú",
               });
               handleChangeFlag();
-              setSelectedNoteActionId(null);
-              setSelectedNote(null);
             } catch (error) {
               console.error("Error pinning note:", error);
               Alert.alert(
@@ -210,14 +222,14 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   };
 
   const handleEditNote = (note: NoteType) => {
-    setSelectedNoteActionId(null);
-    setSelectedNote(null);
+    handleUnSelectItem();
     navigation.navigate("UpdateNote", { note });
   };
 
   const handleDeleteNote = (note: NoteType) => {
+    handleUnSelectItem();
     Alert.alert("Xoá ghi chú", "Bạn có chắc chắn muốn xoá ghi chú này không?", [
-      { text: "Huỷ", style: "cancel" },
+      { text: "Huỷ", style: "cancel", onPress: () => handleSelectItem(note) },
       {
         text: "Xoá",
         style: "destructive",
@@ -232,8 +244,6 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
               text2: "Đã xoá thành công!",
             });
             handleChangeFlag();
-            setSelectedNoteActionId(null);
-            setSelectedNote(null);
           } catch (error) {
             console.error("Error deleting note:", error);
             Alert.alert("Lỗi", "Không thể xoá ghi chú. Vui lòng thử lại sau.");
@@ -244,13 +254,14 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   };
 
   const handleLockNote = (note: NoteType) => {
+    handleUnSelectItem();
     Alert.alert(
       note.locked ? "Mở khoá ghi chú" : "Khoá ghi chú",
       note.locked
         ? "Bạn có muốn mở khoá ghi chú này không?"
         : "Bạn có muốn khoá ghi chú này không?",
       [
-        { text: "Huỷ", style: "cancel" },
+        { text: "Huỷ", style: "cancel", onPress: () => handleSelectItem(note) },
         {
           text: note.locked ? "Mở khoá" : "Khoá",
           onPress: async () => {
@@ -295,6 +306,18 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
     Keyboard.dismiss(); // Ẩn bàn phím nếu có
   };
 
+  const handleSelectItem = (note: NoteType) => {
+    setSelectedNoteActionId(note.id);
+    setSelectedNote(note);
+    Keyboard.dismiss(); // Ẩn bàn phím nếu có
+  };
+
+  const handleUnSelectItem = () => {
+    setSelectedNoteActionId(null);
+    setSelectedNote(null);
+    Keyboard.dismiss(); // Ẩn bàn phím nếu có
+  };
+
   const handleHome = () => {
     navigation.navigate("Main", {
       screen: "Home",
@@ -335,53 +358,6 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         />
       </View>
 
-      {/* <View style={{ flexDirection: "row", marginVertical: 12 }}>
-        <FlatList
-          data={[
-            { id: "all", name: "Tất cả", createdAt: "" },
-            { id: "pinned", name: "Ghim", createdAt: "" },
-            { id: "locked", name: "Đã khoá", createdAt: "" },
-            ...groups,
-          ]}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View key={item.id} style={{ position: "relative" }}>
-              <TouchableOpacity
-                onPress={() => setSelectedGroupId(item.id)}
-                onLongPress={() => handleGroupLongPress(item.id)}
-                delayLongPress={300}
-                style={[
-                  styles.listGroupItem,
-                  selectedGroupId === item.id && {
-                    backgroundColor: Colors.red500 + "15",
-                  },
-                ]}
-              >
-                <GroupItem group={item} />
-              </TouchableOpacity>
-            </View>
-          )}
-          ListHeaderComponent={
-            <TouchableOpacity style={styles.addGroupBtn} onPress={createGroup}>
-              <Ionicons name="add" size={20} color={Colors.primary600} />
-            </TouchableOpacity>
-          }
-          onEndReached={() => {
-            if (!user || loadingGroup || !hasMoreGroup) return;
-            dispatch(
-              getGroupsStore({
-                userId: user.uid,
-                pageSize: PAGE_SIZE,
-                lastCreatedAt: lastCreatedAt,
-              })
-            );
-          }}
-          onEndReachedThreshold={0.3}
-        />
-      </View> */}
-
       {/* Notes */}
       {loading ? (
         <View style={styles.container}>
@@ -404,12 +380,18 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                 viewMode={viewMode}
                 changeFlag={handleChangeFlag}
                 onLongPressNote={() => {
-                  setSelectedNoteActionId(item.id);
-                  setSelectedNote(item);
+                  handleSelectItem(item);
                 }}
+                handleUnSelectItem={handleUnSelectItem}
                 setOpenedSwipeRef={setOpenedSwipeRef}
               />
             )}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
+            }
             showsVerticalScrollIndicator={false}
             onEndReached={() => {
               if (!user || loadingMore || !hasMore) return;

@@ -98,8 +98,11 @@ export default function NoteDetailScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chi tiết ghi chú</Text>
       </View>
@@ -252,5 +255,10 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  backBtn: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "#f5f5f5",
   },
 });

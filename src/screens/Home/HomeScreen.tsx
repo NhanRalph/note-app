@@ -16,11 +16,12 @@ import {
   Alert,
   FlatList,
   Modal,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
@@ -33,6 +34,7 @@ export default function HomeScreen() {
   const [selectedGroupActionId, setSelectedGroupActionId] = useState<
     string | null
   >(null);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   // Redux hooks
   const dispatch = useAppDispatch();
@@ -124,6 +126,20 @@ export default function HomeScreen() {
     return () => clearTimeout(timer);
   }, [searchKeyword]);
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    dispatch(
+      getGroupsStore({
+        userId: user!.uid,
+        pageSize: PAGE_SIZE,
+        lastCreatedAt: null,
+      })
+
+    );
+    dispatch(getNoteStatsStore({ userId: user!.uid }));
+    setRefreshing(false);
+  };
+
   const createGroup = () => {
     if (!user) {
       navigation.navigate("LoginScreen");
@@ -143,27 +159,30 @@ export default function HomeScreen() {
   };
 
   const handleUpdateGroup = (groupId: string) => {
+    handleCloseActions();
     navigation.navigate("UpdateGroup", {
       userId: user!.uid,
       groupId: groupId,
       name: groups.find((g) => g.id === groupId)?.name || "",
     });
-    handleCloseActions();
   };
 
   const handleDeleteGroup = (groupId: string) => {
+    handleCloseActions();
     Alert.alert(`Delete group`, "Bạn có chắc chắn muốn xoá nhóm này không?", [
       {
         text: "Hủy",
         style: "cancel",
+        onPress: () => {
+          setSelectedGroupActionId(groupId);
+        },
       },
       {
         text: "Xoá",
         style: "destructive",
         onPress: () => {
           dispatch(deleteGroupStore({ userId: user!.uid, groupId }));
-dispatch(getNoteStatsStore({ userId: user!.uid }));
-          handleCloseActions();
+          dispatch(getNoteStatsStore({ userId: user!.uid }));
 
           Toast.show({
             type: "success",
@@ -230,6 +249,9 @@ dispatch(getNoteStatsStore({ userId: user!.uid }));
           keyExtractor={(item) => item.id}
           numColumns={viewMode === "grid" ? 2 : 1}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
           renderItem={({ item }) => (
             <GroupItem
               group={item}
