@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React from "react";
 import { useSelector } from "react-redux";
 import CustomBottomTab, {
   TabBarProps,
@@ -9,6 +8,7 @@ import CustomBottomTab, {
 import { RootState } from "../redux/rootReducer";
 import LoginScreen from "../screens/Auth/LoginScreen";
 import SignUpScreen from "../screens/Auth/SignUpScreen";
+import DrawScreen from "../screens/DrawScreen/DrawScreen";
 import CreateGroup from "../screens/Group/CreateGroup";
 import UpdateGroupScreen from "../screens/Group/UpdateGroup";
 import HomeScreen from "../screens/Home/HomeScreen";
@@ -62,6 +62,8 @@ const RootNavigator = () => {
 
             <Stack.Screen name="UpdateNote" component={UpdateNoteScreen} />
             <Stack.Screen name="UpdateGroup" component={UpdateGroupScreen} />
+
+            <Stack.Screen name="DrawScreen" component={DrawScreen} />
           </>
         ) : (
           <>

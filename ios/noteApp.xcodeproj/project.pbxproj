@@ -13,25 +13,25 @@
 		434CAA5AE87B878E7CBCFF16 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FC42343D06CC8FF28B2B5CA /* ExpoModulesProvider.swift */; };
 		B9345B5357B2C7A5BE4DD050 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 261214ACC7D6CF2397B8EB32 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		E163077319730AD208860AAA /* Pods_noteApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C7E8A3500CE1E631E4700A30 /* Pods_noteApp.framework */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		FC94BBBF7AABDB6BF11B5203 /* Pods_noteApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 70DAF8679B7F9861432E34B2 /* Pods_noteApp.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1038429EBDEC8DBF92169293 /* Pods-noteApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noteApp.release.xcconfig"; path = "Target Support Files/Pods-noteApp/Pods-noteApp.release.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* noteApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = noteApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = noteApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = noteApp/Info.plist; sourceTree = "<group>"; };
 		1C0B38942E1D1DA30057ABC5 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		261214ACC7D6CF2397B8EB32 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = noteApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		2FC42343D06CC8FF28B2B5CA /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-noteApp/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		7342420ABF339F47B5A09F43 /* Pods-noteApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noteApp.release.xcconfig"; path = "Target Support Files/Pods-noteApp/Pods-noteApp.release.xcconfig"; sourceTree = "<group>"; };
+		70DAF8679B7F9861432E34B2 /* Pods_noteApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_noteApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9016963B66A1BEA2FC2543C3 /* Pods-noteApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noteApp.debug.xcconfig"; path = "Target Support Files/Pods-noteApp/Pods-noteApp.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = noteApp/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C7E8A3500CE1E631E4700A30 /* Pods_noteApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_noteApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = noteApp/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* noteApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "noteApp-Bridging-Header.h"; path = "noteApp/noteApp-Bridging-Header.h"; sourceTree = "<group>"; };
-		FFE2952AE6FD06438704425C /* Pods-noteApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noteApp.debug.xcconfig"; path = "Target Support Files/Pods-noteApp/Pods-noteApp.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,7 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E163077319730AD208860AAA /* Pods_noteApp.framework in Frameworks */,
+				FC94BBBF7AABDB6BF11B5203 /* Pods_noteApp.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -64,7 +64,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				C7E8A3500CE1E631E4700A30 /* Pods_noteApp.framework */,
+				70DAF8679B7F9861432E34B2 /* Pods_noteApp.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -128,8 +128,8 @@
 		CCA479E2BDABB254473B4EAB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				FFE2952AE6FD06438704425C /* Pods-noteApp.debug.xcconfig */,
-				7342420ABF339F47B5A09F43 /* Pods-noteApp.release.xcconfig */,
+				9016963B66A1BEA2FC2543C3 /* Pods-noteApp.debug.xcconfig */,
+				1038429EBDEC8DBF92169293 /* Pods-noteApp.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -141,15 +141,15 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "noteApp" */;
 			buildPhases = (
-				6BAB8D75E4E160709618C6DC /* [CP] Check Pods Manifest.lock */,
+				0747FDC2638A1D0FAF9C4335 /* [CP] Check Pods Manifest.lock */,
 				93D9966F806522DAEB972753 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				43D9CC3FCF79C126A1EFF3A0 /* [CP] Embed Pods Frameworks */,
-				9CFC2A5CA6F29CBB37E4D30F /* [CP] Copy Pods Resources */,
-				A7FB3C633D548117A83FB2ED /* [CP-User] [RNFB] Core Configuration */,
+				D3901BB46217837E0CA5AA50 /* [CP] Embed Pods Frameworks */,
+				B1D0346B4FC54A6B59400C2D /* [CP] Copy Pods Resources */,
+				EC1F19C99A05DEDC28FAD6AC /* [CP-User] [RNFB] Core Configuration */,
 			);
 			buildRules = (
 			);
@@ -225,25 +225,7 @@
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
-		43D9CC3FCF79C126A1EFF3A0 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-noteApp/Pods-noteApp-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noteApp/Pods-noteApp-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		6BAB8D75E4E160709618C6DC /* [CP] Check Pods Manifest.lock */ = {
+		0747FDC2638A1D0FAF9C4335 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -284,7 +266,7 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-noteApp/expo-configure-project.sh\"\n";
 		};
-		9CFC2A5CA6F29CBB37E4D30F /* [CP] Copy Pods Resources */ = {
+		B1D0346B4FC54A6B59400C2D /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -368,7 +350,25 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noteApp/Pods-noteApp-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		A7FB3C633D548117A83FB2ED /* [CP-User] [RNFB] Core Configuration */ = {
+		D3901BB46217837E0CA5AA50 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noteApp/Pods-noteApp-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noteApp/Pods-noteApp-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		EC1F19C99A05DEDC28FAD6AC /* [CP-User] [RNFB] Core Configuration */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -398,7 +398,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FFE2952AE6FD06438704425C /* Pods-noteApp.debug.xcconfig */;
+			baseConfigurationReference = 9016963B66A1BEA2FC2543C3 /* Pods-noteApp.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -434,7 +434,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7342420ABF339F47B5A09F43 /* Pods-noteApp.release.xcconfig */;
+			baseConfigurationReference = 1038429EBDEC8DBF92169293 /* Pods-noteApp.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

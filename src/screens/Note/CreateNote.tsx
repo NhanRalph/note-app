@@ -80,7 +80,13 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImages((prev) => [...prev, result.assets[0].uri]);
+      const selectedUri = result.assets[0].uri;
+      navigation.navigate("DrawScreen", {
+        imageUri: selectedUri,
+        onSave: (finalUri) => {
+          setImages((prev) => [...prev, finalUri]);
+        }
+      });
     }
   };
 
