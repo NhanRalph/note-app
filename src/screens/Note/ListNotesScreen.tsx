@@ -61,12 +61,20 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   >(undefined);
   const [hasMore, setHasMore] = useState(true);
 
-  const {notes, setNotes, handleUpdateNote, handleDeleteNote, handleSetNotes, handleSetSelectedNote} = useNoteContext();
+  const {
+    notes,
+    setNotes,
+    handleUpdateNote,
+    handleDeleteNote,
+    handleSetNotes,
+    handleSetSelectedNote,
+  } = useNoteContext();
   const [flag, setFlag] = useState(false);
 
   const navigation = useNavigation();
 
   const { user } = useSelector((state: RootState) => state.auth);
+  const { groups } = useSelector((state: RootState) => state.group);
 
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -84,7 +92,11 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
     try {
       if (loading || loadingMore || (!hasMore && params.isLoadMore)) return;
 
-      params.isLoadMore ? setLoadingMore(true) : setLoading(true);
+      if (params.isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
 
       let response;
       if (params.type === "pinned") {
@@ -125,34 +137,41 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const fetch = (groupId: string) => {
     if (!user) return;
 
-    if (groupId === "all") {
-      fetchNotesByType({
-        userId: user.uid,
-        type: "all",
-        keyword: debouncedKeyword,
-        reset: true,
-      });
-    } else if (groupId === "pinned") {
-      fetchNotesByType({
-        userId: user.uid,
-        type: "pinned",
-        keyword: debouncedKeyword,
-        reset: true,
-      });
-    } else if (groupId === "locked") {
-      fetchNotesByType({
-        userId: user.uid,
-        type: "locked",
-        keyword: debouncedKeyword,
-        reset: true,
-      });
-    } else {
-      fetchNotesByType({
-        userId: user.uid,
-        groupId,
-        keyword: debouncedKeyword,
-        reset: true,
-      });
+    try {
+      setLoading(true);
+      if (groupId === "all") {
+        fetchNotesByType({
+          userId: user.uid,
+          type: "all",
+          keyword: debouncedKeyword,
+          reset: true,
+        });
+      } else if (groupId === "pinned") {
+        fetchNotesByType({
+          userId: user.uid,
+          type: "pinned",
+          keyword: debouncedKeyword,
+          reset: true,
+        });
+      } else if (groupId === "locked") {
+        fetchNotesByType({
+          userId: user.uid,
+          type: "locked",
+          keyword: debouncedKeyword,
+          reset: true,
+        });
+      } else {
+        fetchNotesByType({
+          userId: user.uid,
+          groupId,
+          keyword: debouncedKeyword,
+          reset: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+      setLoading(false);
+      return;
     }
   };
 
@@ -162,7 +181,6 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
   //sort notes by pinned,locked, updateAt
   useEffect(() => {
-
     // Sắp xếp ghi chú theo pinned, locked và thời gian cập nhật
     const sorted = [...notes].sort((a, b) => {
       if (a.pinned !== b.pinned) {
@@ -193,6 +211,22 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const createNote = () => {
     if (!user) {
       navigation.navigate("LoginScreen");
+      return;
+    }
+
+    if (groups.length === 0) {
+      Alert.alert(
+        "Thông báo",
+        "Bạn chưa có nhóm nào. Vui lòng tạo nhóm trước khi tạo ghi chú.",
+        [
+          { text: "Huỷ", style: "cancel" },
+          {
+            text: "Tạo nhóm",
+            onPress: () =>
+              navigation.navigate("CreateGroup", { userId: user.uid }),
+          },
+        ]
+      );
       return;
     }
     navigation.navigate("CreateNote", {
@@ -298,7 +332,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                   ...note,
                   locked: !note.locked,
                 });
-                
+
                 Toast.show({
                   type: "success",
                   text1: "Thành công",
@@ -349,6 +383,8 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   };
 
   const handleHome = () => {
+    setSortedNotes([]);
+    setNotes([]);
     navigation.goBack();
   };
 
@@ -387,7 +423,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
       </View>
 
       {/* Notes */}
-      {loading ? (
+      {loading && sortedNotes.length === 0 ? (
         <View style={styles.container}>
           <ActivityIndicator
             size="large"

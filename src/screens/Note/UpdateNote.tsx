@@ -6,7 +6,10 @@ import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
-import { getNoteStatsStore, moveNoteToAnotherGroup } from "@/src/redux/slices/groupSlices";
+import {
+  getNoteStatsStore,
+  moveNoteToAnotherGroup,
+} from "@/src/redux/slices/groupSlices";
 import { createNoteSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
@@ -36,7 +39,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
   const navigation = useNavigation();
   const { groups } = useSelector((state: RootState) => state.group);
   const { user } = useSelector((state: RootState) => state.auth);
-  const { handleUpdateNote, handleDeleteNote} = useNoteContext();
+  const { handleUpdateNote, handleDeleteNote } = useNoteContext();
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
     note.groupId || null
@@ -116,10 +119,12 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
 
       dispatch(getNoteStatsStore({ userId: user!.uid }));
       if (selectedGroupId !== note.groupId) {
-        dispatch(moveNoteToAnotherGroup({
-          fromGroupId: getGroupId(note.groupId),
-          toGroupId: getGroupId(selectedGroupId),
-        }));
+        dispatch(
+          moveNoteToAnotherGroup({
+            fromGroupId: getGroupId(note.groupId),
+            toGroupId: getGroupId(selectedGroupId),
+          })
+        );
 
         handleDeleteNote(note.id);
       }
@@ -219,16 +224,6 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                 {dropdownVisible && (
                   <View style={[styles.dropdownList, { maxHeight: 200 }]}>
                     <ScrollView nestedScrollEnabled>
-                      <TouchableOpacity
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setSelectedGroupId(null);
-                          setDropdownVisible(false);
-                        }}
-                      >
-                        <Text>Không thuộc nhóm nào</Text>
-                      </TouchableOpacity>
-
                       {groups.map((group) => (
                         <TouchableOpacity
                           key={group.id}
@@ -242,6 +237,19 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                         </TouchableOpacity>
                       ))}
                     </ScrollView>
+                    <TouchableOpacity
+                      style={[
+                        styles.dropdownItem,
+                        { justifyContent: "center", alignItems: "center" },
+                      ]}
+                      onPress={() => {
+                        navigation.navigate("CreateGroup", {
+                          userId: user!.uid,
+                        });
+                      }}
+                    >
+                      <Text>Thêm mới</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
 
