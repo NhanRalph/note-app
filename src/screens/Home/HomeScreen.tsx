@@ -1,4 +1,8 @@
-import { getGroupNoteStats, GroupType } from "@/src/api/groupAPI";
+import {
+  getGroupNoteStats,
+  GroupType,
+  updateGroupOrder
+} from "@/src/api/groupAPI";
 import GroupItem from "@/src/components/GroupItem/GroupItem";
 import Colors from "@/src/constants/Colors";
 import { useAppDispatch } from "@/src/hook/useDispatch";
@@ -8,22 +12,22 @@ import {
   adjustNoteStatsFromUpdate,
   deleteGroupStore,
   getGroupsStore,
-  getNoteStatsStore
+  getNoteStatsStore,
 } from "@/src/redux/slices/groupSlices";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Modal,
   RefreshControl,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
+import DraggableFlatList from "react-native-draggable-flatlist";
 import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
 
@@ -31,7 +35,7 @@ export default function HomeScreen() {
   //use state
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [debouncedKeyword, setDebouncedKeyword] = useState<string>("");
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 5;
   const [selectedGroupActionId, setSelectedGroupActionId] = useState<
     string | null
   >(null);
@@ -44,12 +48,11 @@ export default function HomeScreen() {
     groups,
     virtualGroups,
     error,
-    lastCreatedAt,
+    lastOrder,
     loadingGroup,
     loadingMoreGroup,
     hasMoreGroup,
   } = useSelector((state: RootState) => state.group);
-
 
   const [groupsResult, setGroupsResult] = useState<GroupType[]>(groups);
 
@@ -63,30 +66,28 @@ export default function HomeScreen() {
         getGroupsStore({
           userId: user.uid,
           pageSize: PAGE_SIZE,
-          lastCreatedAt: null,
+          lastOrder: null,
         })
-
-        
       );
       dispatch(getNoteStatsStore({ userId: user.uid }));
     }
   }, [user]);
 
-
   useEffect(() => {
     if (!user) return;
 
-    const filteredGroups = groups.filter((group) =>
-      group.name.toLowerCase().includes(debouncedKeyword.toLowerCase())
-    );
+    const keyword = debouncedKeyword.trim().toLowerCase();
 
-    setGroupsResult(filteredGroups);
-  }, [debouncedKeyword]);
+    console.log(groups);
 
-  useEffect(() => {
-    if (!user) return;
-
-    setGroupsResult(groups);
+    if (keyword === "") {
+      setGroupsResult(groups); // hiển thị toàn bộ nhóm
+    } else {
+      const filteredGroups = groups.filter((group) =>
+        group.name.toLowerCase().includes(keyword)
+      );
+      setGroupsResult(filteredGroups);
+    }
   }, [groups]);
 
   //   if (!user) return;
@@ -118,7 +119,6 @@ export default function HomeScreen() {
   //     });
   //   }
   // }, [selectedGroupId, debouncedKeyword, flag]);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedKeyword(searchKeyword);
@@ -133,9 +133,8 @@ export default function HomeScreen() {
       getGroupsStore({
         userId: user!.uid,
         pageSize: PAGE_SIZE,
-        lastCreatedAt: null,
+        lastOrder: null,
       })
-
     );
     dispatch(getNoteStatsStore({ userId: user!.uid }));
     setRefreshing(false);
@@ -183,13 +182,15 @@ export default function HomeScreen() {
         style: "destructive",
         onPress: async () => {
           const resStats = await getGroupNoteStats(user!.uid, groupId);
-          
+
           dispatch(deleteGroupStore({ userId: user!.uid, groupId }));
-          dispatch(adjustNoteStatsFromUpdate({
-            allChange: -resStats.all,
-            pinnedChange: -resStats.pinned,
-            lockedChange: -resStats.locked,
-          }));
+          dispatch(
+            adjustNoteStatsFromUpdate({
+              allChange: -resStats.all,
+              pinnedChange: -resStats.pinned,
+              lockedChange: -resStats.locked,
+            })
+          );
           // dispatch(getNoteStatsStore({ userId: user!.uid }));
 
           Toast.show({
@@ -204,7 +205,7 @@ export default function HomeScreen() {
 
   if (error) {
     <View style={styles.container}>
-      <Text style={{ color: "red" }}>{error}</Text> 
+      <Text style={{ color: "red" }}>{error}</Text>
     </View>;
   }
 
@@ -248,38 +249,62 @@ export default function HomeScreen() {
           />
         </View>
       ) : (
-        <FlatList
-          data={[
-            ...virtualGroups,
-            ...groupsResult,
-          ]}
+        <DraggableFlatList
+          data={[...groupsResult]}
           key={viewMode}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
           numColumns={viewMode === "grid" ? 2 : 1}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
-          renderItem={({ item }) => (
-            <GroupItem
-              group={item}
-              viewMode={viewMode}
-              handleDelete={() => handleDeleteGroup(item.id)}
-              handleEdit={() => handleUpdateGroup(item.id)}
-              onLongPressNote={() => handleGroupLongPress(item.id)}
-            />
+          onDragEnd={async ({ data }) => {
+            setGroupsResult(data);
+            await updateGroupOrder(user!.uid, data);
+          }}
+          renderItem={({ item, drag, isActive }) => (
+            <View
+              style={
+                viewMode === "grid"
+                  ? { width: "48%", marginHorizontal: "1%", marginBottom: 12 }
+                  : undefined
+              }
+            >
+              <GroupItem
+                group={item}
+                viewMode={viewMode}
+                drag={drag}
+                onLongPressNote={() => handleGroupLongPress(item.id)}
+                handleDelete={() => handleDeleteGroup(item.id)}
+                handleEdit={() => handleUpdateGroup(item.id)}
+              />
+            </View>
           )}
-          onEndReached={() => {
+          activationDistance={20}
+          onEndReached={async () => {
             if (!user || loadingMoreGroup || !hasMoreGroup) return;
             dispatch(
               getGroupsStore({
                 userId: user.uid,
                 pageSize: PAGE_SIZE,
-                lastCreatedAt: lastCreatedAt,
+                lastOrder: lastOrder,
               })
             );
           }}
           onEndReachedThreshold={0.3}
+          ListHeaderComponent={
+            <View
+              style={{
+                marginBottom: 4,
+              }}
+            >
+              {virtualGroups.map((item, idx) => (
+                <View key={item.id}>
+                  <GroupItem group={item} viewMode="list" />
+                </View>
+              ))}
+            </View>
+          }
           ListFooterComponent={
             loadingMoreGroup ? (
               <View style={{ padding: 16, alignItems: "center" }}>
@@ -297,6 +322,10 @@ export default function HomeScreen() {
               </View>
             ) : null
           }
+          contentContainerStyle={{
+            paddingBottom: 100,
+            flexGrow: 1,
+          }}
         />
       )}
 

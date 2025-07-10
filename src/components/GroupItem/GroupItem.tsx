@@ -1,9 +1,3 @@
-// import {
-//   deleteNote,
-//   NoteType,
-//   toggleLockNote,
-//   togglePinNote,
-// } from "@/src/api/groupAPI";
 import { GroupType } from "@/src/api/groupAPI";
 import Colors from "@/src/constants/Colors";
 import { useNavigation } from "@/src/hook/useNavigation";
@@ -18,21 +12,20 @@ import { useSelector } from "react-redux";
 type Props = {
   group: GroupType;
   viewMode: "list" | "grid";
-  // changeFlag: () => void;
+  drag?: () => void; 
   onLongPressNote?: () => void;
   handleDelete?: (groupId: string) => void;
   handleEdit?: (groupId: string) => void;
-  // setOpenedSwipeRef?: (ref: Swipeable | null) => void;
 };
 
 export default function GroupItem({
   group,
   viewMode,
-  // changeFlag,
+  drag,
   handleDelete = () => {},
   handleEdit = () => {},
   onLongPressNote,
-}: // setOpenedSwipeRef,
+}:
 Props) {
   const navigation = useNavigation();
   const { user } = useSelector((state: RootState) => state.auth);
@@ -57,9 +50,10 @@ Props) {
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: "#4b7bec" }]}
           onPress={() => {
-            handleEdit(group.id);
+            handleEdit(group.id)
             swipeableRef.current?.close();
-          }}
+          }
+          }
         >
           <Ionicons name="pencil" size={20} color="#fff" />
         </TouchableOpacity>
@@ -67,9 +61,10 @@ Props) {
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: "#EF4444" }]}
           onPress={() => {
-            handleDelete(group.id);
+            handleDelete(group.id)
             swipeableRef.current?.close();
-          }}
+          }
+          }
         >
           <Ionicons name="trash" size={20} color="#fff" />
         </TouchableOpacity>
@@ -124,6 +119,9 @@ Props) {
             <Text numberOfLines={1} style={styles.title}>
               {group.noteCount}
             </Text>
+            <TouchableOpacity onLongPress={drag} delayLongPress={100}>
+              <Text style={{ fontSize: 20 }}>☰</Text>
+            </TouchableOpacity>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
             <Text numberOfLines={1} style={styles.content}>
@@ -137,7 +135,7 @@ Props) {
 
   return (
     <TouchableOpacity
-      style={[styles.container, viewMode === "grid" && { width: "48%" }]}
+      style={[styles.container]}
       onPress={handleGroupClick}
       onLongPress={onLongPressNote}
       delayLongPress={300}
@@ -173,7 +171,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginBottom: 12,
-    marginRight: "2%",
+    marginHorizontal: "1%",
     // add shadow
     shadowColor: "#000",
     shadowOffset: {

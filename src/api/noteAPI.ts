@@ -12,6 +12,7 @@ export interface NoteType {
   pinned: boolean;
   createdAt: string;
   updatedAt: string;
+  order: number;
 }
 
 const updateNoteCount = async (
@@ -28,6 +29,59 @@ const updateNoteCount = async (
     });
 };
 
+export const getAllNotes = async (
+  userId: string,
+  pageSize: number,
+  lastDoc?: FirebaseFirestoreTypes.DocumentSnapshot,
+  keyword?: string
+) => {
+  let query = firestore()
+    .collection("users")
+    .doc(userId)
+    .collection("notes")
+    .orderBy("pinned", "desc")
+    .orderBy("order", "asc")
+    .limit(pageSize);
+
+  if (lastDoc) {
+    query = query.startAfter(lastDoc);
+  }
+
+  const snapshot = await query.get();
+
+  let notes = snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      title: data.title,
+      content: data.content,
+      images: data.images || [],
+      groupId: data.groupId || null,
+      locked: !!data.locked,
+      pinned: !!data.pinned,
+      createdAt:
+        data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+      updatedAt:
+        data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+      order: data.order || 0,
+    };
+  });
+
+  // Lọc theo keyword nếu có
+  if (keyword) {
+    const lowerKeyword = keyword.toLowerCase();
+    notes = notes.filter(
+      (note) =>
+        note.title?.toLowerCase().includes(lowerKeyword) ||
+        note.content?.toLowerCase().includes(lowerKeyword)
+    );
+  }
+
+  const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+
+  return { notes, lastVisible };
+};
+
 export const getNotes = async (
   userId: string,
   pageSize: number,
@@ -40,7 +94,7 @@ export const getNotes = async (
     .doc(userId)
     .collection("notes")
     .orderBy("pinned", "desc")
-    .orderBy("updatedAt", "desc")
+    .orderBy("order", "asc")
     .limit(pageSize);
 
   if (lastDoc) {
@@ -67,6 +121,7 @@ export const getNotes = async (
         data.createdAt?.toDate().toISOString() || new Date().toISOString(),
       updatedAt:
         data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+      order: data.order || 0,
     };
   });
 
@@ -94,13 +149,24 @@ export const createNote = async (
     groupId: string | null;
   }
 ) => {
+  const notesSnap = await firestore()
+    .collection(`users/${userId}/notes`)
+    .orderBy("order", "desc")
+    .limit(1)
+    .get();
+
+  const maxOrder = notesSnap.empty
+    ? 0
+    : (notesSnap.docs[0].data().order || 0) + 1;
+
   const noteRef = firestore().collection(`users/${userId}/notes`).doc();
 
-  const res = await noteRef.set({
+  await noteRef.set({
     ...data,
     images: data.images || [],
     locked: false,
     pinned: false,
+    order: maxOrder,
     createdAt: firestore.FieldValue.serverTimestamp(),
     updatedAt: firestore.FieldValue.serverTimestamp(),
   });
@@ -109,20 +175,16 @@ export const createNote = async (
     await updateNoteCount(userId, data.groupId, 1);
   }
 
-  //return note type
-  const noteData = {
+  return {
     id: noteRef.id,
-    title: data.title,
-    content: data.content,
+    ...data,
     images: data.images || [],
-    groupId: data.groupId || null,
     locked: false,
     pinned: false,
+    order: maxOrder,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-
-  return noteData;
 };
 
 export const updateNote = async (userId: string, noteId: string, data: any) => {
@@ -263,7 +325,7 @@ export const getPinnedNotes = async (
     .doc(userId)
     .collection("notes")
     .where("pinned", "==", true)
-    .orderBy("updatedAt", "desc")
+    .orderBy("order", "asc")
     .limit(pageSize);
 
   if (lastDoc) {
@@ -286,6 +348,7 @@ export const getPinnedNotes = async (
         data.createdAt?.toDate().toISOString() || new Date().toISOString(),
       updatedAt:
         data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+      order: data.order || 0,
     };
   });
 
@@ -315,7 +378,7 @@ export const getLockedNotes = async (
     .doc(userId)
     .collection("notes")
     .where("locked", "==", true)
-    .orderBy("updatedAt", "desc")
+    .orderBy("order", "asc")
     .limit(pageSize);
 
   if (lastDoc) {
@@ -338,6 +401,7 @@ export const getLockedNotes = async (
         data.createdAt?.toDate().toISOString() || new Date().toISOString(),
       updatedAt:
         data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+      order: data.order || 0,
     };
   });
 
@@ -354,4 +418,18 @@ export const getLockedNotes = async (
   const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
 
   return { notes, lastVisible };
+};
+
+export const updateNoteOrder = async (userId: string, notes: NoteType[]) => {
+  const batch = firestore().batch();
+
+  notes.forEach((note) => {
+    const ref = firestore().doc(`users/${userId}/notes/${note.id}`);
+    batch.update(ref, {
+      order: note.order,
+      updatedAt: firestore.FieldValue.serverTimestamp(),
+    });
+  });
+
+  await batch.commit();
 };

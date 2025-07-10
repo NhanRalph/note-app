@@ -17,6 +17,7 @@ type Props = {
   viewMode: "list" | "grid";
   changeFlag: () => void;
   onLongPressNote?: () => void;
+  drag?: () => void;
   handlePinNote: (note: NoteType) => void;
   handleEdit: (note: NoteType) => void;
   handleDelete: (note: NoteType) => void;
@@ -30,6 +31,7 @@ export default function NoteItem({
   viewMode,
   changeFlag,
   onLongPressNote,
+  drag,
   handlePinNote,
   handleEdit,
   handleDelete,
@@ -134,9 +136,16 @@ export default function NoteItem({
               )}
             </View>
           </View>
-          <Text numberOfLines={2} style={styles.content}>
-            {note.content}
-          </Text>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <Text numberOfLines={2} style={styles.content}>
+              {note.content}
+            </Text>
+            <TouchableOpacity onLongPress={drag} delayLongPress={100}>
+              <Text style={{ fontSize: 20 }}>☰</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
             <Text numberOfLines={1} style={styles.contentDate}>
@@ -150,7 +159,7 @@ export default function NoteItem({
 
   return (
     <TouchableOpacity
-      style={[styles.container, viewMode === "grid" && { width: "48%" }]}
+      style={[styles.container]}
       onPress={handleNoteClick}
       onLongPress={onLongPressNote}
       delayLongPress={300}
@@ -190,7 +199,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginBottom: 12,
-    marginRight: "2%",
+    marginHorizontal: "1%",
     // add shadow
     shadowColor: "#000",
     shadowOffset: {

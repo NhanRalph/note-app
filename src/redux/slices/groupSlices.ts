@@ -12,20 +12,20 @@ interface GroupState {
   loadingGroup: boolean;
   virtualGroups: GroupType[];
   error: string | null;
-  lastCreatedAt: string | null;
+  lastOrder: number | null;
   loadingMoreGroup: boolean;
   hasMoreGroup: boolean;
 }
 const initialState: GroupState = {
   groups: [],
   virtualGroups: [
-    { id: "all", name: "Tất cả", createdAt: "", noteCount: 0 },
-    { id: "pinned", name: "Ghim", createdAt: "", noteCount: 0 },
-    { id: "locked", name: "Đã khoá", createdAt: "", noteCount: 0 },
+    { id: "all", name: "Tất cả", createdAt: "", noteCount: 0, order: 0 },
+    { id: "pinned", name: "Ghim", createdAt: "", noteCount: 0, order: 0 },
+    { id: "locked", name: "Đã khoá", createdAt: "", noteCount: 0, order: 0 },
   ],
   loadingGroup: false,
   error: null,
-  lastCreatedAt: null,
+  lastOrder: null,
   loadingMoreGroup: false,
   hasMoreGroup: true,
 };
@@ -36,23 +36,25 @@ export const getGroupsStore = createAsyncThunk(
     {
       userId,
       pageSize,
-      lastCreatedAt,
+      lastOrder,
     }: {
       userId: string;
       pageSize: number;
-      lastCreatedAt: string | null;
+      lastOrder: number | null;
     },
     { rejectWithValue }
   ) => {
     try {
-      const { groups, lastCreatedAt: newLastCreatedAt } = await getGroups(
+      const { groups, lastOrder: newLastCreatedAt } = await getGroups(
         userId,
         pageSize,
-        lastCreatedAt
+        lastOrder
       );
+
+      console.log("Fetched groups:", groups);
       return {
         groups,
-        lastCreatedAt: newLastCreatedAt,
+        lastOrder: newLastCreatedAt,
       };
     } catch (error: any) {
       return rejectWithValue(error.message || "Lỗi khi lấy nhóm");
@@ -127,11 +129,17 @@ const groupSlice = createSlice({
     resetGroupState(state) {
       state.groups = [];
       state.virtualGroups = [
-        { id: "all", name: "Tất cả", createdAt: "", noteCount: 0 },
-        { id: "pinned", name: "Ghim", createdAt: "", noteCount: 0 },
-        { id: "locked", name: "Đã khoá", createdAt: "", noteCount: 0 },
+        { id: "all", name: "Tất cả", createdAt: "", noteCount: 0, order: 0 },
+        { id: "pinned", name: "Ghim", createdAt: "", noteCount: 0, order: 0 },
+        {
+          id: "locked",
+          name: "Đã khoá",
+          createdAt: "",
+          noteCount: 0,
+          order: 0,
+        },
       ];
-      state.lastCreatedAt = null;
+      state.lastOrder = null;
       state.loadingGroup = false;
       state.loadingMoreGroup = false;
       state.hasMoreGroup = true;
@@ -247,7 +255,7 @@ const groupSlice = createSlice({
     builder
       // Get Groups (pagination)
       .addCase(getGroupsStore.pending, (state, action) => {
-        if (action.meta.arg.lastCreatedAt) {
+        if (action.meta.arg.lastOrder) {
           state.loadingMoreGroup = true;
         } else {
           state.loadingGroup = true;
@@ -258,13 +266,13 @@ const groupSlice = createSlice({
         state.loadingGroup = false;
         state.loadingMoreGroup = false;
 
-        if (action.meta.arg.lastCreatedAt) {
+        if (action.meta.arg.lastOrder) {
           state.groups = [...state.groups, ...action.payload.groups];
         } else {
           state.groups = action.payload.groups;
         }
 
-        state.lastCreatedAt = action.payload.lastCreatedAt;
+        state.lastOrder = action.payload.lastOrder;
         state.hasMoreGroup = action.payload.groups.length > 0;
       })
       .addCase(getGroupsStore.rejected, (state, action) => {
@@ -282,9 +290,27 @@ const groupSlice = createSlice({
         const { all, pinned, locked } = action.payload;
 
         state.virtualGroups = [
-          { id: "all", name: "Tất cả", createdAt: "", noteCount: all },
-          { id: "pinned", name: "Ghim", createdAt: "", noteCount: pinned },
-          { id: "locked", name: "Đã khoá", createdAt: "", noteCount: locked },
+          {
+            id: "all",
+            name: "Tất cả",
+            createdAt: "",
+            noteCount: all,
+            order: 0,
+          },
+          {
+            id: "pinned",
+            name: "Ghim",
+            createdAt: "",
+            noteCount: pinned,
+            order: 0,
+          },
+          {
+            id: "locked",
+            name: "Đã khoá",
+            createdAt: "",
+            noteCount: locked,
+            order: 0,
+          },
         ];
       })
       .addCase(getNoteStatsStore.rejected, (state, action) => {

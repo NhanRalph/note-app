@@ -1,11 +1,13 @@
 import {
   deleteNote,
+  getAllNotes,
   getLockedNotes,
   getNotes,
   getPinnedNotes,
   NoteType,
   toggleLockNote,
   togglePinNote,
+  updateNoteOrder,
 } from "@/src/api/noteAPI";
 import NoteItem from "@/src/components/NoteItem/NoteItem";
 import Colors from "@/src/constants/Colors";
@@ -22,7 +24,6 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Keyboard,
   Modal,
   RefreshControl,
@@ -30,9 +31,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
+import DraggableFlatList from "react-native-draggable-flatlist";
 import { Swipeable } from "react-native-gesture-handler";
 import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
@@ -53,7 +54,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const [selectedNote, setSelectedNote] = useState<NoteType | null>(null);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [debouncedKeyword, setDebouncedKeyword] = useState<string>("");
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 4;
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [lastDoc, setLastDoc] = useState<
@@ -113,6 +114,13 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
           params.reset ? undefined : lastDoc,
           params.keyword
         );
+      } else if (params.type === "all") {
+        response = await getAllNotes(
+          params.userId,
+          PAGE_SIZE,
+          params.reset ? undefined : lastDoc,
+          params.keyword
+        );
       } else {
         response = await getNotes(
           params.userId,
@@ -123,7 +131,16 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         );
       }
 
-      setNotes(response.notes);
+      console.log(response.notes.length);
+      console.log("visi", response.lastVisible)
+
+      // If reset is true, replace the notes array with the new data
+      if (params.reset) {
+        setNotes(response.notes);
+      } else {
+        // If isLoadMore is true, append the new data to the existing notes array
+        setNotes(params.isLoadMore ? [...notes, ...(response.notes as NoteType[])] : (response.notes as NoteType[]));
+      }
       setLastDoc(response.lastVisible);
       setHasMore(response.notes.length >= PAGE_SIZE);
     } catch (error) {
@@ -362,14 +379,6 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
     // setFlag(!flag);
   };
 
-  const handlePressOutside = () => {
-    if (openedSwipeRef) {
-      openedSwipeRef.close();
-      setOpenedSwipeRef(null);
-    }
-    Keyboard.dismiss(); // Ẩn bàn phím nếu có
-  };
-
   const handleSelectItem = (note: NoteType) => {
     setSelectedNoteActionId(note.id);
     setSelectedNote(note);
@@ -432,13 +441,34 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
           />
         </View>
       ) : (
-        <TouchableWithoutFeedback onPress={handlePressOutside}>
-          <FlatList
-            data={sortedNotes}
-            key={viewMode}
-            numColumns={viewMode === "grid" ? 2 : 1}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
+        <DraggableFlatList
+          data={sortedNotes}
+          key={viewMode}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
+          numColumns={viewMode === "grid" ? 2 : 1}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+          onDragEnd={async ({ data }) => {
+            console.log("Reordered data:", data);
+            const reorderedNotes = data.map((note, index) => ({
+              ...note,
+              order: index, // Gán lại thứ tự mới
+            }));
+            // Cập nhật thứ tự ghi chú trong cơ sở dữ liệu
+            console.log("Reordered notes: 2", reorderedNotes);
+            await updateNoteOrder(userId, reorderedNotes);
+            setSortedNotes(data);
+          }}
+          renderItem={({ item, drag, isActive }) => (
+            <View
+              style={
+                viewMode === "grid"
+                  ? { width: "48%", marginHorizontal: "1%", marginBottom: 12 }
+                  : undefined
+              }
+            >
               <NoteItem
                 note={item}
                 viewMode={viewMode}
@@ -446,6 +476,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                 onLongPressNote={() => {
                   handleSelectItem(item);
                 }}
+                drag={drag}
                 handlePinNote={handlePinNote}
                 handleEdit={handleEditNote}
                 handleDelete={handleDelete}
@@ -453,60 +484,57 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                 handleUnSelectItem={handleUnSelectItem}
                 setOpenedSwipeRef={setOpenedSwipeRef}
               />
-            )}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-              />
-            }
-            showsVerticalScrollIndicator={false}
-            onEndReached={() => {
-              if (!user || loadingMore || !hasMore) return;
+            </View>
+          )}
+          activationDistance={20}
+          onEndReached={() => {
+            if (!user || loadingMore || !hasMore) return;
 
-              if (selectedGroupId === "all") {
-                fetchNotesByType({
-                  userId: user.uid,
-                  type: "all",
-                  keyword: debouncedKeyword,
-                  isLoadMore: true,
-                });
-              } else if (selectedGroupId === "pinned") {
-                fetchNotesByType({
-                  userId: user.uid,
-                  type: "pinned",
-                  keyword: debouncedKeyword,
-                  isLoadMore: true,
-                });
-              } else {
-                fetchNotesByType({
-                  userId: user.uid,
-                  type: "locked",
-                  groupId: selectedGroupId,
-                  keyword: debouncedKeyword,
-                  isLoadMore: true,
-                });
-              }
-            }}
-            onEndReachedThreshold={0.3}
-            ListFooterComponent={
-              loadingMore ? (
-                <View style={{ padding: 16, alignItems: "center" }}>
-                  <Text style={{ color: "#888" }}>Đang tải thêm...</Text>
-                </View>
-              ) : null
+            if (selectedGroupId === "all") {
+              fetchNotesByType({
+                userId: user.uid,
+                type: "all",
+                keyword: debouncedKeyword,
+                isLoadMore: true,
+              });
+            } else if (selectedGroupId === "pinned") {
+              fetchNotesByType({
+                userId: user.uid,
+                type: "pinned",
+                keyword: debouncedKeyword,
+                isLoadMore: true,
+              });
+            } else {
+              fetchNotesByType({
+                userId: user.uid,
+                type: "locked",
+                groupId: selectedGroupId,
+                keyword: debouncedKeyword,
+                isLoadMore: true,
+              });
             }
-            ListEmptyComponent={
-              !loading ? (
-                <View style={{ padding: 16, alignItems: "center" }}>
-                  <Text style={{ color: "#888" }}>
-                    Chưa có ghi chú nào. Hãy tạo ghi chú mới!
-                  </Text>
-                </View>
-              ) : null
-            }
-          />
-        </TouchableWithoutFeedback>
+          }}
+          onEndReachedThreshold={0.3}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={{ padding: 16, alignItems: "center" }}>
+                <Text style={{ color: "#888" }}>Đang tải thêm...</Text>
+              </View>
+            ) : null
+          }
+          ListEmptyComponent={
+            !loading ? (
+              <View style={{ padding: 16, alignItems: "center" }}>
+                <Text style={{ color: "#888" }}>
+                  Chưa có ghi chú nào. Hãy tạo ghi chú mới!
+                </Text>
+              </View>
+            ) : null
+          }
+          containerStyle={{
+            paddingBottom: 100,
+          }}
+        />
       )}
 
       {/* Nút thêm Note */}
