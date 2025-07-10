@@ -4,9 +4,11 @@ import { useNoteContext } from "@/src/context/noteContext";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootState } from "@/src/redux/rootReducer";
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import {
   Alert,
   Image,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,6 +22,10 @@ export default function NoteDetailScreen() {
   const navigation = useNavigation();
   const { groups } = useSelector((state: RootState) => state.group);
   const { user } = useSelector((state: RootState) => state.auth);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
   // const { note } = route.params;
   const { selectedNote, handleUpdateNote, handleDeleteNote } = useNoteContext();
 
@@ -155,9 +161,16 @@ export default function NoteDetailScreen() {
               Hình ảnh:
             </Text>
             <View style={styles.imageContainer}>
-              {/* Label "Hình ảnh" */}
               {selectedNote.images.map((img, index) => (
-                <Image key={index} source={{ uri: img }} style={styles.image} />
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => {
+                    setSelectedImage(img);
+                    setModalVisible(true);
+                  }}
+                >
+                  <Image source={{ uri: img }} style={styles.image} />
+                </TouchableOpacity>
               ))}
             </View>
           </>
@@ -188,6 +201,36 @@ export default function NoteDetailScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      {/* Modal for viewing image */}
+      {selectedImage && (
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.9)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+            activeOpacity={1}
+            onPress={() => setModalVisible(false)}
+          >
+            <Image
+              source={{ uri: selectedImage }}
+              style={{
+                width: "90%",
+                height: "60%",
+                resizeMode: "contain",
+                borderRadius: 12,
+              }}
+            />
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
 }
