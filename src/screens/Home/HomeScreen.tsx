@@ -35,7 +35,7 @@ export default function HomeScreen() {
   //use state
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [debouncedKeyword, setDebouncedKeyword] = useState<string>("");
-  const PAGE_SIZE = 5;
+  const PAGE_SIZE = 30;
   const [selectedGroupActionId, setSelectedGroupActionId] = useState<
     string | null
   >(null);

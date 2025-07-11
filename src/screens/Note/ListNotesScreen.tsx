@@ -18,7 +18,6 @@ import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
 import { getNoteStatsStore } from "@/src/redux/slices/groupSlices";
 import { Ionicons } from "@expo/vector-icons";
-import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 import { RouteProp } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
@@ -54,12 +53,12 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const [selectedNote, setSelectedNote] = useState<NoteType | null>(null);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [debouncedKeyword, setDebouncedKeyword] = useState<string>("");
-  const PAGE_SIZE = 4;
+  const PAGE_SIZE = 30;
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [lastDoc, setLastDoc] = useState<
-    FirebaseFirestoreTypes.DocumentSnapshot | undefined
-  >(undefined);
+  const [lastOrder, setLastOrder] = useState<
+    number | null
+  >(null);
   const [hasMore, setHasMore] = useState(true);
 
   const {
@@ -104,21 +103,21 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         response = await getPinnedNotes(
           params.userId,
           PAGE_SIZE,
-          params.reset ? undefined : lastDoc,
+          params.reset ? undefined : lastOrder,
           params.keyword
         );
       } else if (params.type === "locked") {
         response = await getLockedNotes(
           params.userId,
           PAGE_SIZE,
-          params.reset ? undefined : lastDoc,
+          params.reset ? undefined : lastOrder,
           params.keyword
         );
       } else if (params.type === "all") {
         response = await getAllNotes(
           params.userId,
           PAGE_SIZE,
-          params.reset ? undefined : lastDoc,
+          params.reset ? undefined : lastOrder,
           params.keyword
         );
       } else {
@@ -126,13 +125,13 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
           params.userId,
           PAGE_SIZE,
           params.groupId,
-          params.reset ? undefined : lastDoc,
+          params.reset ? undefined : lastOrder,
           params.keyword
         );
       }
 
       console.log(response.notes.length);
-      console.log("visi", response.lastVisible)
+      console.log("visi", response.newLastOrder)
 
       // If reset is true, replace the notes array with the new data
       if (params.reset) {
@@ -141,7 +140,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         // If isLoadMore is true, append the new data to the existing notes array
         setNotes(params.isLoadMore ? [...notes, ...(response.notes as NoteType[])] : (response.notes as NoteType[]));
       }
-      setLastDoc(response.lastVisible);
+      setLastOrder(response.newLastOrder);
       setHasMore(response.notes.length >= PAGE_SIZE);
     } catch (error) {
       console.error("Error fetching notes:", error);

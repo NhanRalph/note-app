@@ -1,6 +1,4 @@
-import firestore, {
-  FirebaseFirestoreTypes,
-} from "@react-native-firebase/firestore";
+import firestore from "@react-native-firebase/firestore";
 
 export interface NoteType {
   id: string;
@@ -32,7 +30,7 @@ const updateNoteCount = async (
 export const getAllNotes = async (
   userId: string,
   pageSize: number,
-  lastDoc?: FirebaseFirestoreTypes.DocumentSnapshot,
+  lastOrder?: number | null,
   keyword?: string
 ) => {
   let query = firestore()
@@ -43,8 +41,8 @@ export const getAllNotes = async (
     .orderBy("order", "asc")
     .limit(pageSize);
 
-  if (lastDoc) {
-    query = query.startAfter(lastDoc);
+  if (lastOrder) {
+    query = query.startAfter(lastOrder);
   }
 
   const snapshot = await query.get();
@@ -77,16 +75,17 @@ export const getAllNotes = async (
     );
   }
 
-  const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+  const lastNote = notes[notes.length - 1] || null;
+  const newLastOrder = lastNote?.order ?? null;
 
-  return { notes, lastVisible };
+  return { notes, newLastOrder };
 };
 
 export const getNotes = async (
   userId: string,
   pageSize: number,
   groupId?: string,
-  lastDoc?: FirebaseFirestoreTypes.DocumentSnapshot,
+  lastOrder?: number | null,
   keyword?: string
 ) => {
   let query = firestore()
@@ -97,8 +96,8 @@ export const getNotes = async (
     .orderBy("order", "asc")
     .limit(pageSize);
 
-  if (lastDoc) {
-    query = query.startAfter(lastDoc);
+  if (lastOrder) {
+    query = query.startAfter(lastOrder);
   }
 
   if (groupId) {
@@ -135,9 +134,10 @@ export const getNotes = async (
     );
   }
 
-  const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+  const lastNote = notes[notes.length - 1] || null;
+  const newLastOrder = lastNote?.order ?? null;
 
-  return { notes, lastVisible };
+  return { notes, newLastOrder };
 };
 
 export const createNote = async (
@@ -317,7 +317,7 @@ export const toggleLockNote = async (
 export const getPinnedNotes = async (
   userId: string,
   pageSize: number,
-  lastDoc?: FirebaseFirestoreTypes.DocumentSnapshot,
+  lastOrder?: number | null,
   keyword?: string
 ) => {
   let query = firestore()
@@ -328,8 +328,8 @@ export const getPinnedNotes = async (
     .orderBy("order", "asc")
     .limit(pageSize);
 
-  if (lastDoc) {
-    query = query.startAfter(lastDoc);
+  if (lastOrder) {
+    query = query.startAfter(lastOrder);
   }
 
   const snapshot = await query.get();
@@ -362,15 +362,16 @@ export const getPinnedNotes = async (
     );
   }
 
-  const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+  const lastNote = notes[notes.length - 1] || null;
+  const newLastOrder = lastNote?.order ?? null;
 
-  return { notes, lastVisible };
+  return { notes, newLastOrder };
 };
 
 export const getLockedNotes = async (
   userId: string,
   pageSize: number,
-  lastDoc?: FirebaseFirestoreTypes.DocumentSnapshot,
+  lastOrder?: number | null,
   keyword?: string
 ) => {
   let query = firestore()
@@ -381,8 +382,8 @@ export const getLockedNotes = async (
     .orderBy("order", "asc")
     .limit(pageSize);
 
-  if (lastDoc) {
-    query = query.startAfter(lastDoc);
+  if (lastOrder) {
+    query = query.startAfter(lastOrder);
   }
 
   const snapshot = await query.get();
@@ -415,20 +416,18 @@ export const getLockedNotes = async (
     );
   }
 
-  const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+  const lastNote = notes[notes.length - 1] || null;
+  const newLastOrder = lastNote?.order ?? null;
 
-  return { notes, lastVisible };
+  return { notes, newLastOrder };
 };
 
 export const updateNoteOrder = async (userId: string, notes: NoteType[]) => {
   const batch = firestore().batch();
 
-  notes.forEach((note) => {
+  notes.forEach((note, index) => {
     const ref = firestore().doc(`users/${userId}/notes/${note.id}`);
-    batch.update(ref, {
-      order: note.order,
-      updatedAt: firestore.FieldValue.serverTimestamp(),
-    });
+    batch.update(ref, { order: index });
   });
 
   await batch.commit();

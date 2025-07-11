@@ -101,15 +101,23 @@ export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) 
         throw new Error("ViewShot reference is null");
       }
 
-      const uri = await captureRef(viewShotRef.current, {
-        format: "png",
-        quality: 0.8,
-      });
+      setTimeout(async () => {
+        const uri = await captureRef(viewShotRef.current!, {
+          format: "png",
+          quality: 0.8,
+        });
+        
+        if (!uri) {
+          throw new Error("Failed to capture image");
+        }
+  
+        console.log("Captured image URI:", uri);
+        const url = await uploadToCloudinary(uri);
+        onSave(url);
+        navigation.goBack();
+      }, 100);
 
-      console.log("Captured image URI:", uri);
-      const url = await uploadToCloudinary(uri);
-      onSave(url);
-      navigation.goBack();
+      
     } catch (err) {
       console.error("Export failed", err);
     } finally {
@@ -125,6 +133,7 @@ export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) 
     <View style={{ flex: 1 }}>
       {/* 80% vùng hiển thị vẽ */}
       <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }}>
+      <View collapsable={false}>
         <Canvas
           style={{ width, height: canvasHeight }}
           onTouchStart={(e) =>
@@ -154,6 +163,7 @@ export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) 
             <SkiaPath key={idx} path={p} paint={paint} />
           ))}
         </Canvas>
+      </View>
       </ViewShot>
 
       {/* 20% vùng điều khiển */}
