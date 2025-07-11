@@ -38,7 +38,7 @@ export const getAllNotes = async (
     .doc(userId)
     .collection("notes")
     .orderBy("pinned", "desc")
-    .orderBy("order", "asc")
+    .orderBy("order", "desc")
     .limit(pageSize);
 
   if (lastOrder) {
@@ -93,7 +93,7 @@ export const getNotes = async (
     .doc(userId)
     .collection("notes")
     .orderBy("pinned", "desc")
-    .orderBy("order", "asc")
+    .orderBy("order", "desc")
     .limit(pageSize);
 
   if (lastOrder) {
@@ -325,7 +325,7 @@ export const getPinnedNotes = async (
     .doc(userId)
     .collection("notes")
     .where("pinned", "==", true)
-    .orderBy("order", "asc")
+    .orderBy("order", "desc")
     .limit(pageSize);
 
   if (lastOrder) {
@@ -379,7 +379,7 @@ export const getLockedNotes = async (
     .doc(userId)
     .collection("notes")
     .where("locked", "==", true)
-    .orderBy("order", "asc")
+    .orderBy("order", "desc")
     .limit(pageSize);
 
   if (lastOrder) {

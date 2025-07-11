@@ -202,10 +202,12 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
       if (a.pinned !== b.pinned) {
         return a.pinned ? -1 : 1; // Ghim lên đầu
       }
-      if (a.locked !== b.locked) {
+      // if (a.locked !== b.locked) {
         return a.locked ? 1 : -1; // Khoá xuống dưới
-      }
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(); // Sắp xếp theo thời gian cập nhật
+      // }
+      //return all
+      // return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(); // Sắp xếp theo thời gian cập nhật mới nhất
+      // return (b.order - a.order) ? -1 : 1 ; // Sắp xếp theo thời gian cập nhật
     });
     setSortedNotes(sorted);
   }, [notes, flag]);

@@ -1,4 +1,4 @@
-import { uploadToCloudinary } from "@/src/api/imageAPI";
+import { uploadBase64ToCloudinary } from "@/src/api/imageAPI";
 import { useNavigation } from "@/src/hook/useNavigation";
 import {
   Canvas,
@@ -6,10 +6,11 @@ import {
   Skia,
   Image as SkiaImage,
   Path as SkiaPath,
+  SkImage,
   useCanvasRef,
   useImage,
 } from "@shopify/react-native-skia";
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Dimensions,
@@ -19,7 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import ViewShot, { captureRef } from "react-native-view-shot";
+import ImageResizer from 'react-native-image-resizer';
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,7 +30,11 @@ type DrawOnImageProps = {
   setLoading: (loading: boolean) => void;
 };
 
-export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) => {
+export const DrawOnImage = ({
+  imageUri,
+  onSave,
+  setLoading,
+}: DrawOnImageProps) => {
   const [paths, setPaths] = useState<ReturnType<typeof Skia.Path.Make>[]>([]);
   const [redoStack, setRedoStack] = useState<
     ReturnType<typeof Skia.Path.Make>[]
@@ -37,8 +42,9 @@ export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) 
   const [strokeColor, setStrokeColor] = useState("#FF0000");
 
   const [showColorPicker, setShowColorPicker] = useState(false);
+
+  const [resizedUri, setResizedUri] = useState<string | null>(null);
   const canvasRef = useCanvasRef();
-  const viewShotRef = useRef<ViewShot>(null);
   const navigation = useNavigation();
 
   const paint = Skia.Paint();
@@ -46,7 +52,59 @@ export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) 
   paint.setStrokeWidth(4);
   paint.setStyle(PaintStyle.Stroke);
 
-  const image = useImage(imageUri);
+  const resizeImage = async (uri: string): Promise<string> => {
+    try {
+      const response = await ImageResizer.createResizedImage(
+        uri,
+        512, // width mong muốn (giảm độ phân giải)
+        512, // height mong muốn (auto giữ tỉ lệ nếu keepAspectRatio = true)
+        'JPEG', // định dạng
+        60, // chất lượng (1-100)
+        0 // rotation
+      );
+  
+      return response.uri; // đường dẫn ảnh mới
+    } catch (err) {
+      console.error("Resize failed:", err);
+      return uri; // fallback về ảnh gốc nếu có lỗi
+    }
+  };
+
+  useEffect(() => {
+    if (!imageUri) return;
+    const processImage = async () => {
+      const uri = await resizeImage(imageUri);
+      setResizedUri(uri);
+    };
+    processImage();
+  }, [imageUri]);
+
+  const image = useImage(resizedUri || '') as SkImage;
+
+  if (!image) return null;
+
+  const canvasHeight = height * 0.8;
+
+  const imgWidth = image.width();
+  const imgHeight = image.height();
+  console.log("Image dimensions:", imgWidth, imgHeight);
+  const imgRatio = imgWidth / imgHeight;
+  const canvasRatio = width / canvasHeight;
+
+  let drawWidth, drawHeight;
+  if (imgRatio > canvasRatio) {
+    // ảnh rộng hơn khung → scale theo width
+    drawWidth = width;
+    drawHeight = width / imgRatio;
+  } else {
+    // ảnh cao hơn khung → scale theo height
+    drawHeight = canvasHeight;
+    drawWidth = canvasHeight * imgRatio;
+  }
+
+  // ✅ Tính offset để căn giữa
+  const xOffset = (width - drawWidth) / 2;
+  const yOffset = (canvasHeight - drawHeight) / 2;
 
   const handleTouch = ({
     x,
@@ -57,6 +115,15 @@ export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) 
     y: number;
     type: "start" | "active";
   }) => {
+    // Không cho phép vẽ ngoài vùng ảnh
+    const isInsideDrawingArea =
+      x >= xOffset &&
+      x <= xOffset + drawWidth &&
+      y >= yOffset &&
+      y <= yOffset + drawHeight;
+  
+    if (!isInsideDrawingArea) return;
+  
     if (type === "start") {
       const p = Skia.Path.Make();
       p.moveTo(x, y);
@@ -70,6 +137,7 @@ export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) 
       });
     }
   };
+  
 
   const handleUndo = () => {
     setPaths((prev) => {
@@ -97,27 +165,41 @@ export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) 
   const handleExport = async () => {
     try {
       setLoading(true);
-      if (!viewShotRef.current) {
-        throw new Error("ViewShot reference is null");
+      const canvas = canvasRef.current;
+      if (!canvas || !image) return;
+
+      const imgWidth = image.width();
+      const imgHeight = image.height();
+      const imgRatio = imgWidth / imgHeight;
+      const canvasRatio = width / canvasHeight;
+
+      let drawWidth, drawHeight;
+      if (imgRatio > canvasRatio) {
+        drawWidth = width;
+        drawHeight = width / imgRatio;
+      } else {
+        drawHeight = canvasHeight;
+        drawWidth = canvasHeight * imgRatio;
       }
 
-      setTimeout(async () => {
-        const uri = await captureRef(viewShotRef.current!, {
-          format: "png",
-          quality: 0.8,
-        });
-        
-        if (!uri) {
-          throw new Error("Failed to capture image");
-        }
-  
-        console.log("Captured image URI:", uri);
-        const url = await uploadToCloudinary(uri);
+      const xOffset = (width - drawWidth) / 2;
+      const yOffset = (canvasHeight - drawHeight) / 2;
+
+      const imageSnapshot = canvas.makeImageSnapshot({
+        x: xOffset,
+        y: yOffset,
+        width: drawWidth,
+        height: drawHeight,
+      });
+
+      const imageBase64 = imageSnapshot.encodeToBase64();
+      const uri = `data:image/png;base64,${imageBase64}`;
+
+      if (uri) {
+        const url = await uploadBase64ToCloudinary(uri);
         onSave(url);
         navigation.goBack();
-      }, 100);
-
-      
+      }
     } catch (err) {
       console.error("Export failed", err);
     } finally {
@@ -125,15 +207,11 @@ export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) 
     }
   };
 
-  const canvasHeight = height * 0.8;
-
-  if (!image) return null;
 
   return (
     <View style={{ flex: 1 }}>
       {/* 80% vùng hiển thị vẽ */}
-      <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }}>
-      <View collapsable={false}>
+      <View style={{ flex: 1 }}>
         <Canvas
           style={{ width, height: canvasHeight }}
           onTouchStart={(e) =>
@@ -152,19 +230,21 @@ export const DrawOnImage = ({ imageUri, onSave, setLoading }: DrawOnImageProps) 
           }
           ref={canvasRef}
         >
+          {/* ✅ Vẽ ảnh theo tỉ lệ và căn giữa */}
           <SkiaImage
             image={image}
-            x={0}
-            y={0}
-            width={width}
-            height={canvasHeight}
+            x={xOffset}
+            y={yOffset}
+            width={drawWidth}
+            height={drawHeight}
           />
+
+          {/* ✅ Vẽ các path */}
           {paths.map((p, idx) => (
             <SkiaPath key={idx} path={p} paint={paint} />
           ))}
         </Canvas>
       </View>
-      </ViewShot>
 
       {/* 20% vùng điều khiển */}
       <View

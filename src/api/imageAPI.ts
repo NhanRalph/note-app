@@ -1,21 +1,16 @@
 export const uploadBase64ToCloudinary = async (
-  base64: string,
-  folder: string = "drawings"
+  base64: string
 ): Promise<string> => {
-  const data = {
-    file: `data:image/png;base64,${base64}`,
-    upload_preset: "note-app",
-    folder: folder,
-  };
+  const data = new FormData();
+  data.append("file", base64); // phải là: data:image/png;base64,...
+  data.append("upload_preset", "note-app"); // <== preset bạn tạo
+  data.append("cloud_name", "dlmmripoq"); // thay bằng tên cloud của bạn
 
   const res = await fetch(
     "https://api.cloudinary.com/v1_1/dlmmripoq/image/upload",
     {
       method: "POST",
-      body: JSON.stringify(data),
-      headers: {
-        "Content-Type": "application/json",
-      },
+      body: data,
     }
   );
 
