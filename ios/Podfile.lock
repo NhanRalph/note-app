@@ -2934,6 +2934,8 @@ PODS:
     - Yoga
   - react-native-image-resizer (1.4.5):
     - React-Core
+  - react-native-netinfo (11.4.1):
+    - React-Core
   - react-native-safe-area-context (5.5.1):
     - DoubleConversion
     - glog
@@ -3732,6 +3734,7 @@ DEPENDENCIES:
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-image-resizer (from `../node_modules/react-native-image-resizer`)
+  - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
@@ -3938,6 +3941,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-image-picker"
   react-native-image-resizer:
     :path: "../node_modules/react-native-image-resizer"
+  react-native-netinfo:
+    :path: "../node_modules/@react-native-community/netinfo"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-skia:
@@ -4121,6 +4126,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 3fe68fd19e77d569a33b74f458691846babaf242
   react-native-image-picker: 6ccf4bb98d38facc22db35fc2ee59a574fca4d16
   react-native-image-resizer: d9fb629a867335bdc13230ac2a58702bb8c8828f
+  react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-safe-area-context: 357110bd0d653344a63d3bc53099c171f3374a5e
   react-native-skia: 1e0a9a498d4868a906cab089b263834edc76b7fc
   react-native-view-shot: 92c37eb33b41948a68d0c4a07674cb8ac1a487a9
@@ -4173,6 +4179,6 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 2a3a4c38a8441b6359d5e5914d35db7b2b67aebd
 
-PODFILE CHECKSUM: 9007379af18c3bbfcda187400807c204d8755cb2
+PODFILE CHECKSUM: a69f44860d63be8f12d492797f4a6c122e3929bb
 
 COCOAPODS: 1.16.2
