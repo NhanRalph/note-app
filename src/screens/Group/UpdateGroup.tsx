@@ -4,7 +4,7 @@ import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
-import { updateGroupStore } from "@/src/redux/slices/groupSlices";
+import { updateGroupName, updateGroupStore } from "@/src/redux/slices/groupSlices";
 import { createGroupSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
@@ -37,10 +37,14 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
   };
 
   const handleSubmit = (values: { name: string }) => {
-    dispatch(
-      updateGroupStore({ userId: userId, groupId: groupId, name: values.name })
-    );
+    dispatch(updateGroupName({ id: groupId, name: values.name }));
 
+    dispatch(updateGroupStore({ userId, groupId, name: values.name }))
+      .unwrap()
+      .catch((err) => {
+        // rollback hoặc show error nếu cần
+        console.error("Lỗi khi gọi API updateGroup", err);
+      });
     //check create group success
     if (error) {
       Alert.alert("Error", error);

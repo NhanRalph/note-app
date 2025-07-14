@@ -7,6 +7,7 @@ import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
 import { increaseNoteCount } from "@/src/redux/slices/groupSlices";
+import { hasInternetConnection } from "@/src/utils/checkInternet";
 import { createNoteSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
@@ -85,7 +86,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
         imageUri: selectedUri,
         onSave: (finalUri) => {
           setImages((prev) => [...prev, finalUri]);
-        }
+        },
       });
     }
   };
@@ -107,30 +108,55 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
   const handleSubmit = async (values: { title: string; content: string }) => {
     try {
-      if (selectedGroupId === null) {
+      if (!selectedGroupId) {
         Alert.alert("Thông báo", "Vui lòng chọn nhóm cho ghi chú.");
         return;
       }
       setLoading(true);
-
+  
+      const isConnected = await hasInternetConnection();
+  
+      if (!isConnected) {
+        const mockData = {
+          id: Date.now().toString(),
+          title: values.title,
+          content: values.content,
+          images,
+          groupId: getGroupId(selectedGroupId),
+          locked: false,
+          pinned: false,
+          order: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        dispatch(increaseNoteCount({ groupId: selectedGroupId }));
+        handleAddNote(mockData);
+        navigation.goBack();
+        const res = await createNote(userId, {
+          title: values.title,
+          content: values.content,
+          images,
+          groupId: selectedGroupId,
+        });
+        return;
+      }
+  
       const res = await createNote(userId, {
         title: values.title,
         content: values.content,
         images,
         groupId: selectedGroupId,
       });
-
+  
       dispatch(increaseNoteCount({ groupId: selectedGroupId }));
-
       handleAddNote(res);
-
+  
       Toast.show({
         type: "success",
         text1: "Thành công",
         text2: "Đã tạo ghi chú!",
       });
-
-      //reset navigation to ListNotesScreen
+  
       navigation.goBack();
     } catch (error) {
       console.log(error);

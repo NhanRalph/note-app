@@ -16,7 +16,7 @@ import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
-import { getNoteStatsStore } from "@/src/redux/slices/groupSlices";
+import { decreaseNoteCount, getNoteStatsStore } from "@/src/redux/slices/groupSlices";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
 import { useEffect, useState } from "react";
@@ -266,20 +266,20 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
           text: note.pinned ? "Bỏ ghim" : "Ghim",
           onPress: async () => {
             try {
-              // Call pin API here
-              await togglePinNote(user!.uid, note.id, !note.pinned);
-
               handleUpdateNote({
                 ...note,
                 pinned: !note.pinned,
               });
+              handleChangeFlag();
+
+              // Call pin API here
+              await togglePinNote(user!.uid, note.id, !note.pinned);
 
               Toast.show({
                 type: "success",
                 text1: "Thành công",
                 text2: "Đã ghim ghi chú",
               });
-              handleChangeFlag();
             } catch (error) {
               console.error("Error pinning note:", error);
               Alert.alert(
@@ -309,17 +309,19 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         style: "destructive",
         onPress: async () => {
           try {
+            handleDeleteNote(note.id);
+
+            dispatch(decreaseNoteCount({ groupId: selectedGroupId }));
+            handleChangeFlag();
+
             // Call delete API here
             await deleteNote(user!.uid, note.id);
-
-            handleDeleteNote(note.id);
 
             Toast.show({
               type: "success",
               text1: "Thành công",
               text2: "Đã xoá thành công!",
             });
-            handleChangeFlag();
           } catch (error) {
             console.error("Error deleting note:", error);
             Alert.alert("Lỗi", "Không thể xoá ghi chú. Vui lòng thử lại sau.");
@@ -343,14 +345,16 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
           onPress: async () => {
             {
               try {
-                // Call lock/unlock API here
-                await toggleLockNote(user!.uid, note.id, !note.locked);
-
                 handleUpdateNote({
                   ...note,
                   locked: !note.locked,
                 });
+                handleChangeFlag();
+                setSelectedNoteActionId(null);
+                setSelectedNote(null);
 
+                // Call lock/unlock API here
+                await toggleLockNote(user!.uid, note.id, !note.locked);
                 Toast.show({
                   type: "success",
                   text1: "Thành công",
@@ -358,9 +362,6 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                     ? "Đã mở khoá ghi chú!"
                     : "Đã khoá ghi chú!",
                 });
-                handleChangeFlag();
-                setSelectedNoteActionId(null);
-                setSelectedNote(null);
               } catch (error) {
                 console.error("Error locking/unlocking note:", error);
                 Alert.alert(

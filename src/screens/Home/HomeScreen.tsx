@@ -10,6 +10,7 @@ import { useNavigation } from "@/src/hook/useNavigation";
 import { RootState } from "@/src/redux/rootReducer";
 import {
   adjustNoteStatsFromUpdate,
+  deleteGroupById,
   deleteGroupStore,
   getGroupsStore,
   getNoteStatsStore,
@@ -89,36 +90,7 @@ export default function HomeScreen() {
       setGroupsResult(filteredGroups);
     }
   }, [groups]);
-
-  //   if (!user) return;
-
-  //   if (selectedGroupId === "all") {
-  //     fetchAllNotes({
-  //       userId: user.uid,
-  //       keyword: debouncedKeyword,
-  //       reset: true,
-  //     });
-  //   } else if (selectedGroupId === "pinned") {
-  //     fetchPinnedNotes({
-  //       userId: user.uid,
-  //       keyword: debouncedKeyword,
-  //       reset: true,
-  //     });
-  //   } else if (selectedGroupId === "locked") {
-  //     fetchLockedNotes({
-  //       userId: user.uid,
-  //       keyword: debouncedKeyword,
-  //       reset: true,
-  //     });
-  //   } else {
-  //     fetchNotes({
-  //       userId: user.uid,
-  //       groupId: selectedGroupId,
-  //       keyword: debouncedKeyword,
-  //       reset: true,
-  //     });
-  //   }
-  // }, [selectedGroupId, debouncedKeyword, flag]);
+  
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedKeyword(searchKeyword);
@@ -182,6 +154,7 @@ export default function HomeScreen() {
         style: "destructive",
         onPress: async () => {
           const resStats = await getGroupNoteStats(user!.uid, groupId);
+          dispatch(deleteGroupById({ id: groupId }));
 
           dispatch(deleteGroupStore({ userId: user!.uid, groupId }));
           dispatch(

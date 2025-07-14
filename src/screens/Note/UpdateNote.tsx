@@ -10,6 +10,7 @@ import {
   getNoteStatsStore,
   moveNoteToAnotherGroup,
 } from "@/src/redux/slices/groupSlices";
+import { hasInternetConnection } from "@/src/utils/checkInternet";
 import { createNoteSchema } from "@/src/utils/validationSchema";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
@@ -104,17 +105,10 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
       Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này.");
       return;
     }
+    setLoading(true);
     try {
-      setLoading(true);
-
-      await updateNote(user.uid, note.id, {
-        title: values.title,
-        content: values.content,
-        images,
-        groupId: selectedGroupId,
-      });
-
-      // Tạo bản note mới (có thể thêm updatedAt hoặc fields khác)
+      const isConnected = await hasInternetConnection();
+  
       const updatedNote: NoteType = {
         ...note,
         title: values.title,
@@ -123,11 +117,47 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
         groupId: selectedGroupId,
         updatedAt: new Date().toISOString(),
       };
+  
+      if (!isConnected) {
+        // Offline: chỉ cập nhật local
+        handleUpdateNote(updatedNote);
+        dispatch(getNoteStatsStore({ userId: user.uid }));
+        if (selectedGroupId !== note.groupId) {
+          dispatch(
+            moveNoteToAnotherGroup({
+              fromGroupId: getGroupId(note.groupId),
+              toGroupId: getGroupId(selectedGroupId),
+            })
+          );
+          handleDeleteNote(note.id);
+        }
+        setLoading(false);
 
-      // Gọi callback để update note tại màn hình cha
+      Toast.show({
+        type: "success",
+        text1: "Thành công",
+        text2: "Đã chỉnh sửa ghi chú!",
+      });
+        navigation.goBack();
+        await updateNote(user.uid, note.id, {
+          title: values.title,
+          content: values.content,
+          images,
+          groupId: selectedGroupId,
+        });
+        return;
+      }
+  
+      // Online: cập nhật server
+      await updateNote(user.uid, note.id, {
+        title: values.title,
+        content: values.content,
+        images,
+        groupId: selectedGroupId,
+      });
+  
       handleUpdateNote(updatedNote);
-
-      dispatch(getNoteStatsStore({ userId: user!.uid }));
+      dispatch(getNoteStatsStore({ userId: user.uid }));
       if (selectedGroupId !== note.groupId) {
         dispatch(
           moveNoteToAnotherGroup({
@@ -135,10 +165,9 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
             toGroupId: getGroupId(selectedGroupId),
           })
         );
-
         handleDeleteNote(note.id);
       }
-
+  
       Toast.show({
         type: "success",
         text1: "Thành công",

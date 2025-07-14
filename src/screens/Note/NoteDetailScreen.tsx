@@ -30,7 +30,7 @@ export default function NoteDetailScreen() {
   const { selectedNote, handleUpdateNote, handleDeleteNote } = useNoteContext();
 
   if (!selectedNote) {
-    Alert.alert("Lỗi", "Không tìm thấy ghi chú. Vui lòng thử lại sau.");
+    // Alert.alert("Lỗi", "Không tìm thấy ghi chú. Vui lòng thử lại sau.");
     navigation.goBack();
     return null;
   }

@@ -232,6 +232,22 @@ const groupSlice = createSlice({
         allGroup.noteCount += 1;
       }
     },
+
+    decreaseNoteCount(state, action: { payload: { groupId: string } }) {
+      const { groupId } = action.payload;
+
+      // Tăng nhóm thực (groupId cụ thể)
+      const targetGroup = state.groups.find((g) => g.id === groupId);
+      if (targetGroup) {
+        targetGroup.noteCount -= 1;
+      }
+
+      // Tăng nhóm ảo "all"
+      const allGroup = state.virtualGroups.find((g) => g.id === "all");
+      if (allGroup) {
+        allGroup.noteCount += 1;
+      }
+    },
     moveNoteToAnotherGroup(
       state,
       action: { payload: { fromGroupId: string; toGroupId: string } }
@@ -249,6 +265,25 @@ const groupSlice = createSlice({
       if (toGroup) {
         toGroup.noteCount += 1;
       }
+    },
+    updateGroupLocal(
+      state,
+      action: { payload: { groupId: string; name: string } }
+    ) {
+      const { groupId, name } = action.payload;
+      const index = state.groups.findIndex((g) => g.id === groupId);
+      if (index !== -1) {
+        state.groups[index].name = name;
+      }
+    },
+    updateGroupName(state, action: { payload: { id: string; name: string } }) {
+      const index = state.groups.findIndex((g) => g.id === action.payload.id);
+      if (index !== -1) {
+        state.groups[index].name = action.payload.name;
+      }
+    },
+    deleteGroupById(state, action: { payload: { id: string } }) {
+      state.groups = state.groups.filter((g) => g.id !== action.payload.id);
     },
   },
   extraReducers: (builder) => {
@@ -372,6 +407,10 @@ export const {
   batchChangeNoteStats,
   adjustNoteStatsFromUpdate,
   increaseNoteCount,
+  decreaseNoteCount,
+  updateGroupLocal,
+  updateGroupName,
+  deleteGroupById,
   moveNoteToAnotherGroup,
 } = groupSlice.actions;
 export default groupSlice.reducer;

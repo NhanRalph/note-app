@@ -41,7 +41,7 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({
   const handleDeleteNote = (noteId: string) => {
     setNotes((prevNotes) => prevNotes.filter((note) => note.id !== noteId));
     if (selectedNote && selectedNote.id === noteId) {
-      setSelectedNote(null); // Clear selected note if it was deleted
+      setSelectedNote(null);
     }
   };
 

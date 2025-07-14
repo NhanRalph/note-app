@@ -1,5 +1,5 @@
 import firestore from "@react-native-firebase/firestore";
-
+import { hasInternetConnection } from "../utils/checkInternet";
 export interface NoteType {
   id: string;
   title: string;
@@ -12,19 +12,21 @@ export interface NoteType {
   updatedAt: string;
   order: number;
 }
-
-const updateNoteCount = async (
+export const updateNoteCount = async (
   userId: string,
   groupId: string,
   increment: number
 ) => {
   if (!groupId) return;
 
-  await firestore()
-    .doc(`users/${userId}/groups/${groupId}`)
-    .update({
+  const groupRef = firestore().doc(`users/${userId}/groups/${groupId}`);
+
+  await groupRef.set(
+    {
       noteCount: firestore.FieldValue.increment(increment),
-    });
+    },
+    { merge: true }
+  );
 };
 
 export const getAllNotes = async (
@@ -149,6 +151,7 @@ export const createNote = async (
     groupId: string | null;
   }
 ) => {
+  const isConnected = await hasInternetConnection();
   const notesSnap = await firestore()
     .collection(`users/${userId}/notes`)
     .orderBy("order", "desc")
@@ -172,7 +175,13 @@ export const createNote = async (
   });
 
   if (data.groupId) {
-    await updateNoteCount(userId, data.groupId, 1);
+    if (isConnected) {
+      console.log("Online");
+      await updateNoteCount(userId, data.groupId, 1);
+    } else {
+      console.log("Offline, not updating note count");
+      updateNoteCount(userId, data.groupId, 1);
+    }
   }
 
   return {
