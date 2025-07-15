@@ -11,7 +11,7 @@ interface DrawScreenProps {
 }
 
 const DrawScreen: React.FC<DrawScreenProps> = ({ route }) => {
-  const { imageUri, onSave } = route.params;
+  const { userId, noteId, imageUri, onSave } = route.params;
   const [ loading, setLoading ] = React.useState(false);
 
   if (loading) {
@@ -22,7 +22,7 @@ const DrawScreen: React.FC<DrawScreenProps> = ({ route }) => {
     );
   }
 
-  return <DrawOnImage imageUri={imageUri} onSave={onSave} setLoading={setLoading} />;
+  return <DrawOnImage userId={userId} noteId={noteId} imageUri={imageUri} onSave={onSave} setLoading={setLoading} />;
 };
 
 export default DrawScreen;

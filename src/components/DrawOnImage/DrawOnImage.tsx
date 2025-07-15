@@ -1,5 +1,7 @@
 import { uploadBase64ToCloudinary } from "@/src/api/imageAPI";
 import { useNavigation } from "@/src/hook/useNavigation";
+import { hasInternetConnection } from "@/src/utils/checkInternet";
+import firestore from "@react-native-firebase/firestore";
 import {
   Canvas,
   PaintStyle,
@@ -20,17 +22,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import ImageResizer from 'react-native-image-resizer';
+import RNFS from "react-native-fs";
+import ImageResizer from "react-native-image-resizer";
 
 const { width, height } = Dimensions.get("window");
 
 type DrawOnImageProps = {
+  userId: string;
+  noteId: string;
   imageUri: string;
   onSave: (url: string) => void;
   setLoading: (loading: boolean) => void;
 };
 
 export const DrawOnImage = ({
+  userId,
+  noteId,
   imageUri,
   onSave,
   setLoading,
@@ -58,11 +65,11 @@ export const DrawOnImage = ({
         uri,
         512, // width mong muốn (giảm độ phân giải)
         512, // height mong muốn (auto giữ tỉ lệ nếu keepAspectRatio = true)
-        'JPEG', // định dạng
+        "JPEG", // định dạng
         60, // chất lượng (1-100)
         0 // rotation
       );
-  
+
       return response.uri; // đường dẫn ảnh mới
     } catch (err) {
       console.error("Resize failed:", err);
@@ -79,7 +86,7 @@ export const DrawOnImage = ({
     processImage();
   }, [imageUri]);
 
-  const image = useImage(resizedUri || '') as SkImage;
+  const image = useImage(resizedUri || "") as SkImage;
 
   if (!image) return null;
 
@@ -121,9 +128,9 @@ export const DrawOnImage = ({
       x <= xOffset + drawWidth &&
       y >= yOffset &&
       y <= yOffset + drawHeight;
-  
+
     if (!isInsideDrawingArea) return;
-  
+
     if (type === "start") {
       const p = Skia.Path.Make();
       p.moveTo(x, y);
@@ -137,7 +144,6 @@ export const DrawOnImage = ({
       });
     }
   };
-  
 
   const handleUndo = () => {
     setPaths((prev) => {
@@ -164,26 +170,10 @@ export const DrawOnImage = ({
 
   const handleExport = async () => {
     try {
+      const isConnected = await hasInternetConnection();
       setLoading(true);
       const canvas = canvasRef.current;
       if (!canvas || !image) return;
-
-      const imgWidth = image.width();
-      const imgHeight = image.height();
-      const imgRatio = imgWidth / imgHeight;
-      const canvasRatio = width / canvasHeight;
-
-      let drawWidth, drawHeight;
-      if (imgRatio > canvasRatio) {
-        drawWidth = width;
-        drawHeight = width / imgRatio;
-      } else {
-        drawHeight = canvasHeight;
-        drawWidth = canvasHeight * imgRatio;
-      }
-
-      const xOffset = (width - drawWidth) / 2;
-      const yOffset = (canvasHeight - drawHeight) / 2;
 
       const imageSnapshot = canvas.makeImageSnapshot({
         x: xOffset,
@@ -195,8 +185,47 @@ export const DrawOnImage = ({
       const imageBase64 = imageSnapshot.encodeToBase64();
       const uri = `data:image/png;base64,${imageBase64}`;
 
-      if (uri) {
+      if (!isConnected) {
+        // 👉 Lưu local
+        const localPath = `${
+          RNFS.DocumentDirectoryPath
+        }/offline_${Date.now()}.png`;
+
+        onSave(`file://${localPath}`);
+        navigation.goBack();
+
+        await RNFS.writeFile(localPath, imageBase64, "base64");
+
+        const noteRef = firestore()
+          .collection("users")
+          .doc(userId)
+          .collection("notes")
+          .doc(noteId);
+
+        // 👉 Cập nhật Firestore với local path
+        await noteRef.update({
+          images: firestore.FieldValue.arrayUnion(`file://${localPath}`),
+          isSynced: false,
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
+      } else {
         const url = await uploadBase64ToCloudinary(uri);
+
+        console.log("user id", userId);
+        console.log("note id", noteId);
+
+        const noteRef = firestore()
+          .collection("users")
+          .doc(userId)
+          .collection("notes")
+          .doc(noteId);
+          
+        await noteRef.update({
+          images: firestore.FieldValue.arrayUnion(url),
+          isSynced: true,
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
+
         onSave(url);
         navigation.goBack();
       }
@@ -206,7 +235,6 @@ export const DrawOnImage = ({
       setLoading(false);
     }
   };
-
 
   return (
     <View style={{ flex: 1 }}>

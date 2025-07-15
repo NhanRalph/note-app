@@ -14,7 +14,12 @@ export type RootStackParamList = {
   UpdateNote: { note: NoteType };
   UpdateGroup: { userId: string; groupId: string; name: string };
 
-  DrawScreen: { imageUri: string; onSave: (uri: string) => void };
+  DrawScreen: {
+    userId: string;
+    noteId: string;
+    imageUri: string;
+    onSave: (uri: string) => void;
+  };
 };
 
 export type BottomTabParamList = {

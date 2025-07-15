@@ -1,4 +1,9 @@
-import { createNote } from "@/src/api/noteAPI";
+import {
+  createDraftNote,
+  finalizeDraftNote,
+  NoteType,
+  updateNote,
+} from "@/src/api/noteAPI";
 import Button from "@/src/components/Button/Button";
 import Colors from "@/src/constants/Colors";
 import { useNoteContext } from "@/src/context/noteContext";
@@ -13,7 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Formik } from "formik";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -36,6 +41,8 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   const userId = route.params?.userId;
   let groupId = route.params?.groupId;
   const { groups } = useSelector((state: RootState) => state.group);
+
+  const [draftNote, setDraftNote] = useState<NoteType | null>(null);
 
   if (
     groupId === null ||
@@ -69,9 +76,44 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
     content: "",
   };
 
+  useEffect(() => {
+    if (!userId || draftNote) return;
+    const fetchDraftNote = async () => {
+      console.log("🌀 Bắt đầu tạo draft...");
+
+      const isConnected = await hasInternetConnection();
+      if (!isConnected) {
+        const draft = await createDraftNote(userId);
+        console.log("✅ Draft Offline tạo xong:", draft);
+        setDraftNote(draft);
+        return;
+      }
+
+      try {
+        const draft = await createDraftNote(userId);
+        console.log("✅ Draft tạo xong:", draft);
+
+        if (draft) {
+          setDraftNote(draft);
+          setImages(draft.images || []);
+        }
+      } catch (error) {
+        console.error("❌ Lỗi khi tạo draft:", error);
+        Alert.alert("Lỗi", "Không thể tạo ghi chú nháp. Vui lòng thử lại.");
+      }
+    };
+
+    fetchDraftNote();
+  }, [userId, draftNote]);
+
   const handlePickImage = async () => {
     if (images.length >= 5) {
       Alert.alert("Thông báo", "Chỉ chọn tối đa 5 hình ảnh.");
+      return;
+    }
+
+    if (!draftNote) {
+      Alert.alert("Thông báo", "Ghi chú chưa được khởi tạo.");
       return;
     }
 
@@ -82,7 +124,10 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selectedUri = result.assets[0].uri;
+      // setImages((prev) => [...prev, selectedUri]);
       navigation.navigate("DrawScreen", {
+        userId: userId,
+        noteId: draftNote.id,
         imageUri: selectedUri,
         onSave: (finalUri) => {
           setImages((prev) => [...prev, finalUri]);
@@ -105,20 +150,45 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
         return groupId as string;
     }
   };
-
   const handleSubmit = async (values: { title: string; content: string }) => {
     try {
       if (!selectedGroupId) {
         Alert.alert("Thông báo", "Vui lòng chọn nhóm cho ghi chú.");
         return;
       }
+
+      if (!draftNote) {
+        Alert.alert("Thông báo", "Ghi chú chưa được khởi tạo.");
+        return;
+      }
+
       setLoading(true);
-  
+
       const isConnected = await hasInternetConnection();
-  
-      if (!isConnected) {
-        const mockData = {
-          id: Date.now().toString(),
+
+      if (isConnected) {
+        // Online: finalize draft note và update Firestore
+        const res = await finalizeDraftNote(userId, draftNote.id, {
+          title: values.title,
+          content: values.content,
+          images,
+          groupId: selectedGroupId,
+        });
+
+        dispatch(increaseNoteCount({ groupId: selectedGroupId }));
+        handleAddNote(res);
+
+        Toast.show({
+          type: "success",
+          text1: "Thành công",
+          text2: "Đã tạo ghi chú!",
+        });
+
+        navigation.goBack();
+      } else {
+        // Offline: tạo note mock local, chờ sync
+        const mockNote = {
+          id: draftNote.id,
           title: values.title,
           content: values.content,
           images,
@@ -128,43 +198,37 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
           order: 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          isSynced: false, // Đánh dấu là chưa đồng bộ
         };
+
         dispatch(increaseNoteCount({ groupId: selectedGroupId }));
-        handleAddNote(mockData);
-        navigation.goBack();
-        const res = await createNote(userId, {
-          title: values.title,
-          content: values.content,
-          images,
-          groupId: selectedGroupId,
+        handleAddNote(mockNote);
+
+        Toast.show({
+          type: "info",
+          text1: "Đã lưu offline",
+          text2: "Ghi chú sẽ được đồng bộ khi có mạng.",
         });
-        return;
+
+        navigation.goBack();
+        await updateNote(userId, draftNote.id, mockNote);
+        // Optionally: thêm vào hàng chờ sync thủ công ở đây (nếu bạn có queue sync riêng)
       }
-  
-      const res = await createNote(userId, {
-        title: values.title,
-        content: values.content,
-        images,
-        groupId: selectedGroupId,
-      });
-  
-      dispatch(increaseNoteCount({ groupId: selectedGroupId }));
-      handleAddNote(res);
-  
-      Toast.show({
-        type: "success",
-        text1: "Thành công",
-        text2: "Đã tạo ghi chú!",
-      });
-  
-      navigation.goBack();
     } catch (error) {
-      console.log(error);
+      console.error("Error creating note:", error);
       Alert.alert("Lỗi", "Không thể tạo ghi chú.");
     } finally {
       setLoading(false);
     }
   };
+
+  // if (!draftNote) {
+  //   return (
+  //     <View style={styles.container}>
+  //       <Text>Đang khởi tạo ghi chú nháp...</Text>
+  //     </View>
+  //   );
+  // }
 
   return (
     <View style={styles.container}>
@@ -180,9 +244,13 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
         nestedScrollEnabled
       >
         <Text style={styles.title}>Tạo ghi chú</Text>
+        <Text style={styles.title}>{draftNote?.id ? draftNote.id : ""}</Text>
 
         <Formik
-          initialValues={initialValues}
+          initialValues={{
+            title: draftNote?.title || "",
+            content: draftNote?.content || "",
+          }}
           validationSchema={createNoteSchema}
           onSubmit={handleSubmit}
         >

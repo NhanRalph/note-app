@@ -11,6 +11,7 @@ export interface NoteType {
   createdAt: string;
   updatedAt: string;
   order: number;
+  isSynced?: boolean; // Thêm trường này để đánh dấu note đã đồng bộ
 }
 export const updateNoteCount = async (
   userId: string,
@@ -39,6 +40,7 @@ export const getAllNotes = async (
     .collection("users")
     .doc(userId)
     .collection("notes")
+    .where("isSynced", "==", true)
     .orderBy("pinned", "desc")
     .orderBy("order", "desc")
     .limit(pageSize);
@@ -59,10 +61,8 @@ export const getAllNotes = async (
       groupId: data.groupId || null,
       locked: !!data.locked,
       pinned: !!data.pinned,
-      createdAt:
-        data.createdAt?.toDate().toISOString() || new Date().toISOString(),
-      updatedAt:
-        data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+      createdAt: new Date().toISOString() || new Date().toISOString(),
+      updatedAt: new Date().toISOString() || new Date().toISOString(),
       order: data.order || 0,
     };
   });
@@ -94,6 +94,7 @@ export const getNotes = async (
     .collection("users")
     .doc(userId)
     .collection("notes")
+    .where("isSynced", "==", true)
     .orderBy("pinned", "desc")
     .orderBy("order", "desc")
     .limit(pageSize);
@@ -118,10 +119,8 @@ export const getNotes = async (
       groupId: data.groupId || null,
       locked: !!data.locked,
       pinned: !!data.pinned,
-      createdAt:
-        data.createdAt?.toDate().toISOString() || new Date().toISOString(),
-      updatedAt:
-        data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+      createdAt: new Date().toISOString() || new Date().toISOString(),
+      updatedAt: new Date().toISOString() || new Date().toISOString(),
       order: data.order || 0,
     };
   });
@@ -186,6 +185,108 @@ export const createNote = async (
 
   return {
     id: noteRef.id,
+    ...data,
+    images: data.images || [],
+    locked: false,
+    pinned: false,
+    order: maxOrder,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+// Tạo bản nháp để lấy trước noteId (offline cũng có thể dùng được)
+export const createDraftNote = async (userId: string) => {
+  const noteRef = firestore().collection(`users/${userId}/notes`).doc();
+
+  const isConnected = await hasInternetConnection();
+  if (isConnected) {
+    await noteRef.set({
+      id: noteRef.id,
+      title: "",
+      content: "",
+      images: [],
+      groupId: null,
+      locked: false,
+      pinned: false,
+      order: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isSynced: false,
+    });
+  } else {
+    noteRef.set({
+      id: noteRef.id,
+      title: "",
+      content: "",
+      images: [],
+      groupId: null,
+      locked: false,
+      pinned: false,
+      order: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isSynced: false,
+    });
+  }
+
+  return {
+    id: noteRef.id,
+    title: "",
+    content: "",
+    images: [],
+    groupId: null,
+    locked: false,
+    pinned: false,
+    order: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    isSynced: false,
+  };
+};
+
+// Hoàn thiện note sau khi thêm nội dung/ảnh xong
+export const finalizeDraftNote = async (
+  userId: string,
+  noteId: string,
+  data: {
+    title: string;
+    content: string;
+    images?: string[];
+    groupId: string | null;
+  }
+) => {
+  const isConnected = await hasInternetConnection();
+
+  const noteRef = firestore().doc(`users/${userId}/notes/${noteId}`);
+  const noteSnap = await noteRef.get();
+
+  if (!noteSnap.exists) throw new Error("Draft note không tồn tại");
+
+  const notesSnap = await firestore()
+    .collection(`users/${userId}/notes`)
+    .orderBy("order", "desc")
+    .limit(1)
+    .get();
+
+  const maxOrder = notesSnap.empty
+    ? 0
+    : (notesSnap.docs[0].data().order || 0) + 1;
+
+  await noteRef.update({
+    ...data,
+    images: data.images || [],
+    order: maxOrder,
+    updatedAt: firestore.FieldValue.serverTimestamp(),
+    isSynced: isConnected,
+  });
+
+  if (data.groupId) {
+    await updateNoteCount(userId, data.groupId, 1);
+  }
+
+  return {
+    id: noteId,
     ...data,
     images: data.images || [],
     locked: false,
@@ -334,6 +435,7 @@ export const getPinnedNotes = async (
     .doc(userId)
     .collection("notes")
     .where("pinned", "==", true)
+    .where("isSynced", "==", true)
     .orderBy("order", "desc")
     .limit(pageSize);
 
@@ -353,10 +455,8 @@ export const getPinnedNotes = async (
       groupId: data.groupId || null,
       locked: !!data.locked,
       pinned: !!data.pinned,
-      createdAt:
-        data.createdAt?.toDate().toISOString() || new Date().toISOString(),
-      updatedAt:
-        data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+      createdAt: new Date().toISOString() || new Date().toISOString(),
+      updatedAt: new Date().toISOString() || new Date().toISOString(),
       order: data.order || 0,
     };
   });
@@ -387,6 +487,7 @@ export const getLockedNotes = async (
     .collection("users")
     .doc(userId)
     .collection("notes")
+    .where("isSynced", "==", true)
     .where("locked", "==", true)
     .orderBy("order", "desc")
     .limit(pageSize);
@@ -407,10 +508,8 @@ export const getLockedNotes = async (
       groupId: data.groupId || null,
       locked: !!data.locked,
       pinned: !!data.pinned,
-      createdAt:
-        data.createdAt?.toDate().toISOString() || new Date().toISOString(),
-      updatedAt:
-        data.updatedAt?.toDate().toISOString() || new Date().toISOString(),
+      createdAt: new Date().toISOString() || new Date().toISOString(),
+      updatedAt: new Date().toISOString() || new Date().toISOString(),
       order: data.order || 0,
     };
   });

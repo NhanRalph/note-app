@@ -1,4 +1,6 @@
+import NetInfo from '@react-native-community/netinfo';
 import firebase from '@react-native-firebase/app';
+import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { useEffect } from 'react';
 import { LogBox, SafeAreaView, StyleSheet } from 'react-native';
@@ -10,7 +12,7 @@ import Colors from './src/constants/Colors';
 import { NoteProvider } from './src/context/noteContext';
 import RootNavigator from './src/navigation';
 import store, { persistor } from './src/redux';
-
+import { syncOfflineNoteImages } from './src/utils/syncImage';
 
 if (!firebase.apps.length) {
   console.log('Firebase chưa được khởi tạo');
@@ -35,6 +37,20 @@ const App = () => {
     // Ẩn warning nếu có
     LogBox.ignoreLogs(['Setting a timer']); 
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      if (state.isConnected) {
+        const userId = auth().currentUser?.uid;
+        if (userId) {
+          syncOfflineNoteImages(userId);
+        }
+      }
+    });
+  
+    return () => unsubscribe();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>

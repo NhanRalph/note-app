@@ -55,8 +55,7 @@ export const getGroups = async (
       name: data.name,
       noteCount: data.noteCount || 0,
       order: data.order || 0,
-      createdAt:
-        data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+      createdAt: new Date().toISOString() || new Date().toISOString(),
     };
   });
 

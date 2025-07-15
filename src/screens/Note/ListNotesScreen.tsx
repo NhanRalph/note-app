@@ -16,7 +16,11 @@ import { useAppDispatch } from "@/src/hook/useDispatch";
 import { useNavigation } from "@/src/hook/useNavigation";
 import { RootStackParamList } from "@/src/navigation/types/navigationTypes";
 import { RootState } from "@/src/redux/rootReducer";
-import { decreaseNoteCount, getNoteStatsStore } from "@/src/redux/slices/groupSlices";
+import {
+  batchChangeNoteStats,
+  decreaseNoteCount,
+  getNoteStatsStore,
+} from "@/src/redux/slices/groupSlices";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
 import { useEffect, useState } from "react";
@@ -56,9 +60,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const PAGE_SIZE = 30;
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [lastOrder, setLastOrder] = useState<
-    number | null
-  >(null);
+  const [lastOrder, setLastOrder] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   const {
@@ -131,14 +133,18 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
       }
 
       console.log(response.notes.length);
-      console.log("visi", response.newLastOrder)
+      console.log("visi", response.newLastOrder);
 
       // If reset is true, replace the notes array with the new data
       if (params.reset) {
         setNotes(response.notes);
       } else {
         // If isLoadMore is true, append the new data to the existing notes array
-        setNotes(params.isLoadMore ? [...notes, ...(response.notes as NoteType[])] : (response.notes as NoteType[]));
+        setNotes(
+          params.isLoadMore
+            ? [...notes, ...(response.notes as NoteType[])]
+            : (response.notes as NoteType[])
+        );
       }
       setLastOrder(response.newLastOrder);
       setHasMore(response.notes.length >= PAGE_SIZE);
@@ -203,7 +209,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         return a.pinned ? -1 : 1; // Ghim lên đầu
       }
       // if (a.locked !== b.locked) {
-        return a.locked ? 1 : -1; // Khoá xuống dưới
+      return a.locked ? 1 : -1; // Khoá xuống dưới
       // }
       //return all
       // return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(); // Sắp xếp theo thời gian cập nhật mới nhất
@@ -309,10 +315,17 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         style: "destructive",
         onPress: async () => {
           try {
+            dispatch(
+              batchChangeNoteStats([{ target: "all", type: "decrement" }])
+            );
+            if (note.pinned)
+              dispatch(
+                batchChangeNoteStats([{ target: "pinned", type: "decrement" }])
+              );
+            dispatch(decreaseNoteCount({ groupId: selectedGroupId }));
             handleDeleteNote(note.id);
 
-            dispatch(decreaseNoteCount({ groupId: selectedGroupId }));
-            handleChangeFlag();
+            // handleChangeFlag();
 
             // Call delete API here
             await deleteNote(user!.uid, note.id);
