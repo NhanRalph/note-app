@@ -12,6 +12,7 @@ export interface NoteType {
   updatedAt: string;
   order: number;
   isSynced?: boolean; // Thêm trường này để đánh dấu note đã đồng bộ
+  isDraft?: boolean; // Thêm trường này để đánh dấu note là bản nháp
 }
 export const updateNoteCount = async (
   userId: string,
@@ -41,6 +42,7 @@ export const getAllNotes = async (
     .doc(userId)
     .collection("notes")
     .where("isSynced", "==", true)
+    .where("isDraft", "==", false)
     .orderBy("pinned", "desc")
     .orderBy("order", "desc")
     .limit(pageSize);
@@ -95,6 +97,7 @@ export const getNotes = async (
     .doc(userId)
     .collection("notes")
     .where("isSynced", "==", true)
+    .where("isDraft", "==", false)
     .orderBy("pinned", "desc")
     .orderBy("order", "desc")
     .limit(pageSize);
@@ -213,6 +216,7 @@ export const createDraftNote = async (userId: string) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       isSynced: false,
+      isDraft: true, // Đánh dấu là bản nháp
     });
   } else {
     noteRef.set({
@@ -227,6 +231,7 @@ export const createDraftNote = async (userId: string) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       isSynced: false,
+      isDraft: true, // Đánh dấu là bản nháp
     });
   }
 
@@ -242,6 +247,7 @@ export const createDraftNote = async (userId: string) => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     isSynced: false,
+    isDraft: true, // Đánh dấu là bản nháp
   };
 };
 
@@ -279,6 +285,7 @@ export const finalizeDraftNote = async (
     order: maxOrder,
     updatedAt: firestore.FieldValue.serverTimestamp(),
     isSynced: isConnected,
+    isDraft: false,
   });
 
   if (data.groupId) {
@@ -436,6 +443,7 @@ export const getPinnedNotes = async (
     .collection("notes")
     .where("pinned", "==", true)
     .where("isSynced", "==", true)
+    .where("isDraft", "==", false)
     .orderBy("order", "desc")
     .limit(pageSize);
 
@@ -488,6 +496,7 @@ export const getLockedNotes = async (
     .doc(userId)
     .collection("notes")
     .where("isSynced", "==", true)
+    .where("isDraft", "==", false)
     .where("locked", "==", true)
     .orderBy("order", "desc")
     .limit(pageSize);

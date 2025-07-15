@@ -199,6 +199,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           isSynced: false, // Đánh dấu là chưa đồng bộ
+          isDraft: false, // Đánh dấu là ghi chú nháp
         };
 
         dispatch(increaseNoteCount({ groupId: selectedGroupId }));

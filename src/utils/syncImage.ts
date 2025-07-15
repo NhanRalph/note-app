@@ -62,6 +62,7 @@ export const syncOfflineNoteImages = async (userId: string) => {
           .update({
             images: newImageUrls,
             isSynced: true,
+            isDraft: false,
           });
 
         console.log(`✅ Synced note ${noteId}`);
