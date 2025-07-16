@@ -76,6 +76,8 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selectedUri = result.assets[0].uri;
       navigation.navigate("DrawScreen", {
+        userId: user!.uid,
+        noteId: note.id,
         imageUri: selectedUri,
         onSave: (finalUri) => {
           setImages((prev) => [...prev, finalUri]);
