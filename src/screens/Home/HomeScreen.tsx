@@ -271,7 +271,7 @@ export default function HomeScreen() {
                 marginBottom: 4,
               }}
             >
-              {virtualGroups.map((item, idx) => (
+              {virtualGroups.map((item: GroupType, idx: number) => (
                 <View key={item.id}>
                   <GroupItem group={item} viewMode="list" />
                 </View>

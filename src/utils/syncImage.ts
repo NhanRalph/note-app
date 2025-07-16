@@ -3,13 +3,19 @@ import firestore from "@react-native-firebase/firestore";
 import RNFS from "react-native-fs";
 
 // Truyền userId vào hàm này (vì cấu trúc bạn có users/{userId})
-export const syncOfflineNoteImages = async (userId: string) => {
+export const syncOfflineNoteImages = async (
+  userId: string,
+  onProgress: (progress: number) => void // Thêm callback để cập nhật tiến trình
+) => {
   const notesSnap = await firestore()
     .collection("users")
     .doc(userId)
     .collection("notes")
     .where("isSynced", "==", false)
     .get();
+
+  const totalNotes = notesSnap.size; // Tổng số ghi chú cần đồng bộ
+  let processedNotes = 0; // Số ghi chú đã xử lý
 
   for (const doc of notesSnap.docs) {
     const note = doc.data();
@@ -37,7 +43,7 @@ export const syncOfflineNoteImages = async (userId: string) => {
           );
 
           newImageUrls.push(cloudUrl);
-          // await RNFS.unlink(realPath);
+          // await RNFS.unlink(realPath); // Nếu muốn xóa file sau khi tải lên
           updated = true;
         } catch (err: any) {
           console.error(
@@ -49,12 +55,18 @@ export const syncOfflineNoteImages = async (userId: string) => {
         }
       } else {
         newImageUrls.push(imgPath);
+        updated = true;
       }
+    }
+
+    //trường hợp note không có ảnh nhưng isSynced là false thì vẫn có updated = true. để cập nhật lại
+    if (note.images.length === 0 && note.isSynced === false) {
+      updated = true;
     }
 
     if (updated) {
       try {
-        await firestore()
+        firestore()
           .collection("users")
           .doc(userId)
           .collection("notes")
@@ -73,5 +85,10 @@ export const syncOfflineNoteImages = async (userId: string) => {
         );
       }
     }
+
+    // Cập nhật tiến trình sau mỗi ghi chú
+    processedNotes += 1;
+    const progress = Math.floor((processedNotes / totalNotes) * 100); // Tính phần trăm
+    onProgress(progress); // Cập nhật tiến trình cho callback
   }
 };

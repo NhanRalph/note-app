@@ -1,5 +1,6 @@
 import {
   createDraftNote,
+  deleteNote,
   finalizeDraftNote,
   NoteType,
   updateNote,
@@ -223,6 +224,34 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
     }
   };
 
+  const handleBack = async (values: { title: string; content: string }) => {
+    if (!draftNote) {
+      navigation.goBack();
+      return;
+    }
+
+    if (images.length > 0 || values.title || values.content) {
+      Alert.alert(
+        "Xác nhận",
+        "Bạn có chắc muốn rời khỏi trang này? Tất cả thay đổi sẽ không được lưu.",
+        [
+          { text: "Hủy", style: "cancel" },
+          {
+            text: "Rời khỏi",
+            onPress: async () => {
+              await deleteNote(userId, draftNote.id)
+              navigation.goBack()
+            },
+            style: "destructive",
+          },
+        ]
+      );
+    } else {
+      await deleteNote(userId, draftNote.id)
+      navigation.goBack();
+    }
+  }
+
   // if (!draftNote) {
   //   return (
   //     <View style={styles.container}>
@@ -232,22 +261,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   // }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
-      </TouchableOpacity>
-      <ScrollView
-        style={{ flex: 1 }}
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled
-      >
-        <Text style={styles.title}>Tạo ghi chú</Text>
-        <Text style={styles.title}>{draftNote?.id ? draftNote.id : ""}</Text>
-
-        <Formik
+    <View style={styles.container}><Formik
           initialValues={{
             title: draftNote?.title || "",
             content: draftNote?.content || "",
@@ -264,6 +278,23 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
             touched,
             dirty,
           }) => (
+            <>
+            
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={() => handleBack(values)}
+      >
+        <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
+      </TouchableOpacity>
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+      >
+        <Text style={styles.title}>Tạo ghi chú</Text>
+        <Text style={styles.title}>{draftNote?.id ? draftNote.id : ""}</Text>
+
+        
             <>
               <TextInput
                 style={styles.input}
@@ -368,9 +399,10 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
                 disabled={!dirty}
               />
             </>
+      </ScrollView>
+            </>
           )}
         </Formik>
-      </ScrollView>
     </View>
   );
 };
