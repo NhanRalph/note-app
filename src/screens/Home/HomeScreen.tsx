@@ -17,6 +17,7 @@ import {
 } from "@/src/redux/slices/groupSlices";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -58,6 +59,9 @@ export default function HomeScreen() {
   const [groupsResult, setGroupsResult] = useState<GroupType[]>(groups);
 
   const { user } = useSelector((state: RootState) => state.auth);
+
+    // Sử dụng hook useTranslation để truy cập hàm t và đối tượng i18n
+  const { t, i18n } = useTranslation(); 
 
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
@@ -141,16 +145,16 @@ export default function HomeScreen() {
 
   const handleDeleteGroup = (groupId: string) => {
     handleCloseActions();
-    Alert.alert(`Delete group`, "Bạn có chắc chắn muốn xoá nhóm này không?", [
+    Alert.alert(t('home.delete_group_title'), t('home.delete_group_confirm'), [ // Dịch tiêu đề và nội dung Alert
       {
-        text: "Hủy",
+        text: t('common.cancel'), // Dịch nút "Hủy"
         style: "cancel",
         onPress: () => {
           setSelectedGroupActionId(groupId);
         },
       },
       {
-        text: "Xoá",
+        text: t('common.delete'), // Dịch nút "Xoá"
         style: "destructive",
         onPress: async () => {
           const resStats = await getGroupNoteStats(user!.uid, groupId);
@@ -168,8 +172,8 @@ export default function HomeScreen() {
 
           Toast.show({
             type: "success",
-            text1: "Thành công",
-            text2: "Đã xoá nhóm thành công!",
+            text1: t('common.success'), // Dịch "Thành công"
+            text2: t('home.delete_group_success'), // Dịch "Đã xoá nhóm thành công!"
           });
         },
       },
@@ -186,7 +190,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>List Groups Daily</Text>
+        <Text style={styles.headerTitle}>{t("home.title")}</Text>
         <TouchableOpacity
           onPress={() => setViewMode(viewMode === "list" ? "grid" : "list")}
         >
@@ -206,7 +210,7 @@ export default function HomeScreen() {
           style={{ marginRight: 8 }}
         />
         <TextInput
-          placeholder="Tìm kiếm ghi chú..."
+          placeholder={t("home.search_placeholder")} // Dịch placeholder
           style={styles.searchInput}
           value={searchKeyword}
           onChangeText={(text) => setSearchKeyword(text)}
@@ -281,7 +285,7 @@ export default function HomeScreen() {
           ListFooterComponent={
             loadingMoreGroup ? (
               <View style={{ padding: 16, alignItems: "center" }}>
-                <Text style={{ color: "#888" }}>Đang tải thêm...</Text>
+                <Text style={{ color: "#888" }}>{t("home.loading_more_groups")}</Text> {/* Dịch */}
               </View>
             ) : null
           }
@@ -290,7 +294,7 @@ export default function HomeScreen() {
             !loadingGroup && groups.length === 0 ? (
               <View style={{ padding: 16, alignItems: "center" }}>
                 <Text style={{ color: "#888" }}>
-                  Không có nhóm nào. Hãy tạo nhóm mới!
+                  {t("home.no_groups_found")} {/* Dịch */}
                 </Text>
               </View>
             ) : null
@@ -324,7 +328,7 @@ export default function HomeScreen() {
               onPress={() => handleUpdateGroup(selectedGroupActionId!)}
             >
               <Text style={[styles.actionText, { color: "#4b7bec" }]}>
-                <Ionicons name="pencil" size={14} color={"#4b7bec"} /> Chỉnh sửa
+                <Ionicons name="pencil" size={14} color={"#4b7bec"} /> {t('home.edit_group')} {/* Dịch */}
               </Text>
             </TouchableOpacity>
 
@@ -333,7 +337,7 @@ export default function HomeScreen() {
               onPress={() => handleDeleteGroup(selectedGroupActionId!)}
             >
               <Text style={[styles.actionText, { color: "#EF4444" }]}>
-                <Ionicons name="trash" size={14} color={"#EF4444"} /> Xoá
+                <Ionicons name="trash" size={14} color={"#EF4444"} /> {t('common.delete')} {/* Dịch */}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity

@@ -18,32 +18,37 @@ import NoteDetailScreen from "../screens/Note/NoteDetailScreen";
 import UpdateNoteScreen from "../screens/Note/UpdateNote";
 import ProfileScreen from "../screens/Profile/ProfileScreen";
 import { RootStackParamList } from "./types/navigationTypes";
+// Import hook useTranslation
+import { useTranslation } from "react-i18next";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const userTabBarProps: TabBarProps[] = [
-  {
-    route: "Home",
-    component: HomeScreen,
-    tabBarLabel: "Trang chủ",
-    tabBarIconProps: {
-      iconType: Ionicons,
-      iconName: "home",
-    },
-  },
-  {
-    route: "Profile",
-    component: ProfileScreen,
-    tabBarLabel: "Cá nhân",
-    tabBarIconProps: {
-      iconType: Ionicons,
-      iconName: "person",
-    },
-  },
-];
-
 const RootNavigator = () => {
   const { user } = useSelector((state: RootState) => state.auth);
+  // Sử dụng hook useTranslation để truy cập hàm t
+  const { t } = useTranslation();
+
+  // Định nghĩa userTabBarProps bên trong component để có thể sử dụng hàm t
+  const userTabBarProps: TabBarProps[] = [
+    {
+      route: "Home",
+      component: HomeScreen,
+      tabBarLabel: t("navigation.home_tab"), // Dịch nhãn "Trang chủ"
+      tabBarIconProps: {
+        iconType: Ionicons,
+        iconName: "home",
+      },
+    },
+    {
+      route: "Profile",
+      component: ProfileScreen,
+      tabBarLabel: t("navigation.profile_tab"), // Dịch nhãn "Cá nhân"
+      tabBarIconProps: {
+        iconType: Ionicons,
+        iconName: "person",
+      },
+    },
+  ];
 
   return (
     <NavigationContainer>
@@ -55,14 +60,11 @@ const RootNavigator = () => {
             </Stack.Screen>
             
             <Stack.Screen name="ListNotesScreen" component={ListNotesScreen} />
-
             <Stack.Screen name="CreateGroup" component={CreateGroup} />
             <Stack.Screen name="CreateNote" component={CreateNote} />
             <Stack.Screen name="NoteDetail" component={NoteDetailScreen} options={{ headerShown: false }} />
-
             <Stack.Screen name="UpdateNote" component={UpdateNoteScreen} />
             <Stack.Screen name="UpdateGroup" component={UpdateGroupScreen} />
-
             <Stack.Screen name="DrawScreen" component={DrawScreen} />
           </>
         ) : (

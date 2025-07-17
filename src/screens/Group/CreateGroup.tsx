@@ -19,6 +19,8 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
+// Import hook useTranslation
+import { useTranslation } from "react-i18next";
 
 interface CreateGroupScreenProps {
   route: RouteProp<RootStackParamList, "CreateGroup">;
@@ -32,13 +34,8 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
     (state: RootState) => state.group
   );
 
-  // useEffect(() => {
-  //   if (user) {
-  //     navigation.navigate("Main", {
-  //       screen: "Home",
-  //     });
-  //   }
-  // }, [user]);
+  // Sử dụng hook useTranslation để truy cập hàm t
+  const { t } = useTranslation();
 
   const initialValues = {
     name: "",
@@ -49,14 +46,14 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
 
     //check create group success
     if (error) {
-      Alert.alert("Error", error);
+      Alert.alert(t('common.error'), error); // Dịch tiêu đề "Error"
       return;
     }
 
     Toast.show({
       type: "success",
-      text1: "Thành công",
-      text2: "Đã tạo nhóm ghi chú mới!",
+      text1: t('common.success'), // Dịch "Thành công"
+      text2: t('create_group.success_message'), // Dịch "Đã tạo nhóm ghi chú mới!"
     });
     navigation.goBack();
   };
@@ -70,7 +67,8 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
       >
         <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
       </TouchableOpacity>
-      <Text style={styles.title}>Tạo nhóm ghi chú</Text>
+      {/* Dịch tiêu đề màn hình */}
+      <Text style={styles.title}>{t('create_group.title')}</Text> 
 
       <Formik
         initialValues={initialValues}
@@ -89,7 +87,7 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
           <>
             <TextInput
               style={styles.input}
-              placeholder="Group Name"
+              placeholder={t('create_group.placeholder_name')} // Dịch placeholder
               placeholderTextColor="#999"
               onChangeText={handleChange("name")}
               onBlur={handleBlur("name")}
@@ -97,11 +95,12 @@ const CreateGroupScreen: React.FC<CreateGroupScreenProps> = ({ route }) => {
               autoCapitalize="none"
             />
             {touched.name && errors.name && (
+              // Giả định errors.name đã được dịch từ validationSchema hoặc bạn cần thêm logic dịch ở đây
               <Text style={styles.error}>{errors.name}</Text>
             )}
 
             <Button
-              title="Tạo nhóm"
+              title={t('create_group.create_button')} // Dịch nút "Tạo nhóm"
               size="large"
               color={Colors.primary600}
               onPress={handleSubmit}

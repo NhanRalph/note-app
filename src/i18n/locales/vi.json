@@ -1,0 +1,49 @@
+{
+  "button": {
+    "change_language": "Đổi ngôn ngữ"
+  },
+  "profile": {
+    "screen_title": "Thông tin cá nhân",
+    "email_label": "Email",
+    "guest_label": "Khách",
+    "logout_button": "Đăng xuất",
+    "login_button": "Đăng nhập",
+    "logout_title": "Đăng xuất",
+    "logout_confirm": "Bạn có chắc muốn đăng xuất?"
+  },
+  "common": {
+    "hello": "Xin chào",
+    "welcome": "Chào mừng bạn đến với ứng dụng của chúng tôi!",
+    "cancel": "Hủy",
+    "delete": "Xoá",
+    "success": "Thành công"
+  },
+  "home": {
+    "title": "Nhóm của tôi",
+    "description": "Đây là màn hình chính.",
+    "search_placeholder": "Tìm kiếm nhóm...",
+    "delete_group_title": "Xoá nhóm",
+    "delete_group_confirm": "Bạn có chắc chắn muốn xoá nhóm này không?",
+    "delete_group_success": "Đã xoá nhóm thành công!",
+    "loading_more_groups": "Đang tải thêm nhóm...",
+    "no_groups_found": "Không tìm thấy nhóm nào.",
+    "edit_group": "Chỉnh sửa"
+  },
+  "navigation": {
+    "home_tab": "Trang chủ",
+    "profile_tab": "Hồ sơ"
+  },
+  "create_group": {
+    "title": "Tạo nhóm ghi chú",
+    "placeholder_name": "Tên nhóm",
+    "create_button": "Tạo nhóm",
+    "success_message": "Đã tạo nhóm ghi chú mới thành công!"
+  },
+  "validation": {
+    "email_invalid": "Email không hợp lệ",
+    "required_field": "Bắt buộc nhập",
+    "min_length": "Tối thiểu {{min}} ký tự",
+    "max_length": "Tối đa {{max}} ký tự",
+    "password_mismatch": "Mật khẩu không khớp"
+  }
+}
