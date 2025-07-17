@@ -13,8 +13,9 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import Share from "react-native-share";
 import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
 
@@ -112,6 +113,49 @@ export default function NoteDetailScreen() {
     );
   };
 
+  const handleShare = async () => {
+    try {
+
+      // trong trường hợp có ảnh, thì show link các ảnh ra trong sharedMessage
+      const shareMessage = `Title: ${selectedNote.title}
+      
+${selectedNote.content}
+
+${selectedNote.images && selectedNote.images.length > 0
+        ? selectedNote.images.map((img) => `${img}`).join("\n\n")
+        : "Không có hình ảnh đính kèm."}
+
+Shared from MyNotesApp`;
+
+      let shareOptions: {
+        title: string;
+        message: string;
+        type: string;
+      } = {
+        title: "Chia sẻ ghi chú của bạn",
+        message: shareMessage,
+        type: "text/plain"
+      };
+
+      await Share.open(shareOptions);
+      Toast.show({
+        type: "success",
+        text1: "Thành công",
+        text2: "Ghi chú đã được chia sẻ!",
+      });
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message?: unknown }).message === "string" &&
+        (error as { message: string }).message !== "User did not share"
+      ) {
+        Alert.alert("Lỗi", "Không thể chia sẻ ghi chú. Vui lòng thử lại sau.");
+      }
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -123,6 +167,9 @@ export default function NoteDetailScreen() {
           <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chi tiết ghi chú</Text>
+        <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
+          <Ionicons name="share-outline" size={24} color={Colors.primary600} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -181,6 +228,7 @@ export default function NoteDetailScreen() {
       <View style={styles.actionButtonsContainer}>
         {!selectedNote.locked && (
           <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
+            <Ionicons name="create-outline" size={18} color="#fff" />
             <Text style={styles.actionButtonText}>Chỉnh sửa</Text>
           </TouchableOpacity>
         )}
@@ -189,6 +237,7 @@ export default function NoteDetailScreen() {
             style={[styles.actionButton, { backgroundColor: "#e74c3c" }]}
             onPress={handleDelete}
           >
+            <Ionicons name="trash-outline" size={18} color="#fff" />
             <Text style={styles.actionButtonText}>Xoá</Text>
           </TouchableOpacity>
         )}
@@ -196,6 +245,13 @@ export default function NoteDetailScreen() {
           style={[styles.actionButton, { backgroundColor: "#6366f1" }]}
           onPress={handleLock}
         >
+          <Ionicons
+            name={
+              selectedNote.locked ? "lock-open-outline" : "lock-closed-outline"
+            }
+            size={18}
+            color="#fff"
+          />
           <Text style={styles.actionButtonText}>
             {selectedNote.locked ? "Mở khoá" : "Khoá"}
           </Text>
@@ -244,11 +300,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
+    flex: 1,
     marginLeft: 16,
   },
   title: {
@@ -312,6 +370,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   backBtn: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "#f5f5f5",
+  },
+  shareBtn: {
     padding: 8,
     borderRadius: 20,
     backgroundColor: "#f5f5f5",
