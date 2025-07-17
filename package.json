@@ -44,6 +44,7 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.4",
+    "react-native-biometrics": "^3.0.1",
     "react-native-draggable-flatlist": "^4.0.3",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "~2.24.0",
