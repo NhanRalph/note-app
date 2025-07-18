@@ -29,6 +29,9 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
+// Import hook useTranslation
+import { GroupType } from "@/src/api/groupAPI";
+import { useTranslation } from "react-i18next";
 
 interface UpdateNoteScreenProps {
   route: RouteProp<RootStackParamList, "UpdateNote">;
@@ -42,6 +45,9 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   const { handleUpdateNote, handleDeleteNote } = useNoteContext();
 
+  // Sử dụng hook useTranslation
+  const { t } = useTranslation();
+
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
     note.groupId || null
   );
@@ -51,8 +57,8 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
 
   const selectedGroupName =
     selectedGroupId === null
-      ? "Không thuộc nhóm nào"
-      : groups.find((g) => g.id === selectedGroupId)?.name || "Không rõ";
+      ? t('update_note.no_group') // Dịch "Không thuộc nhóm nào"
+      : groups.find((g) => g.id === selectedGroupId)?.name || t('update_note.unknown_group'); // Dịch "Không rõ"
 
   const initialValues = {
     title: note.title || "",
@@ -61,17 +67,21 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
 
   const handlePickImage = async () => {
     if (images.length >= 5) {
-      Alert.alert("Thông báo", "Chỉ chọn tối đa 5 hình ảnh.");
+      Alert.alert(t('common.notification'), t('update_note.max_images_reached')); // Dịch "Thông báo", "Chỉ chọn tối đa 5 hình ảnh."
       return;
     }
+
+    // This check seems to be copied from CreateNoteScreen, but `note` is always defined here.
+    // Keeping the translation key for consistency if it's used elsewhere.
+    // if (!note) {
+    //   Alert.alert(t('common.notification'), t('update_note.note_not_initialized')); // Dịch "Thông báo", "Ghi chú chưa được khởi tạo."
+    //   return;
+    // }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.7,
     });
-
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selectedUri = result.assets[0].uri;
@@ -83,7 +93,6 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
           setImages((prev) => [...prev, finalUri]);
         }
       });
-    }
     }
   };
 
@@ -104,7 +113,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
 
   const handleSubmit = async (values: { title: string; content: string }) => {
     if (!user) {
-      Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này.");
+      Alert.alert(t('common.error'), t('update_note.login_required_error')); // Dịch "Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này."
       return;
     }
     setLoading(true);
@@ -131,15 +140,15 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
               toGroupId: getGroupId(selectedGroupId),
             })
           );
-          handleDeleteNote(note.id);
+          handleDeleteNote(note.id); // This seems incorrect for a move, should be update, not delete
         }
         setLoading(false);
 
-      Toast.show({
-        type: "success",
-        text1: "Thành công",
-        text2: "Đã chỉnh sửa ghi chú!",
-      });
+        Toast.show({
+          type: "success",
+          text1: t('common.success'), // Dịch "Thành công"
+          text2: t('update_note.update_success'), // Dịch "Đã chỉnh sửa ghi chú!"
+        });
         navigation.goBack();
         await updateNote(user.uid, note.id, {
           title: values.title,
@@ -167,18 +176,18 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
             toGroupId: getGroupId(selectedGroupId),
           })
         );
-        handleDeleteNote(note.id);
+        handleDeleteNote(note.id); // This seems incorrect for a move, should be update, not delete
       }
   
       Toast.show({
         type: "success",
-        text1: "Thành công",
-        text2: "Đã chỉnh sửa ghi chú!",
+        text1: t('common.success'), // Dịch "Thành công"
+        text2: t('update_note.update_success'), // Dịch "Đã chỉnh sửa ghi chú!"
       });
       navigation.goBack();
     } catch (error) {
       console.log(error);
-      Alert.alert("Lỗi", "Không thể chỉnh sửa ghi chú.");
+      Alert.alert(t('common.error'), t('update_note.update_failed')); // Dịch "Lỗi", "Không thể chỉnh sửa ghi chú."
     } finally {
       setLoading(false);
     }
@@ -197,7 +206,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
       >
-        <Text style={styles.title}>Chỉnh sửa ghi chú</Text>
+        <Text style={styles.title}>{t('update_note.screen_title')}</Text> {/* Dịch "Chỉnh sửa ghi chú" */}
 
         <Formik
           initialValues={initialValues}
@@ -223,7 +232,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
               <>
                 <TextInput
                   style={styles.input}
-                  placeholder="Tiêu đề ghi chú"
+                  placeholder={t('update_note.title_placeholder')} // Dịch "Tiêu đề ghi chú"
                   placeholderTextColor="#999"
                   onChangeText={handleChange("title")}
                   onBlur={handleBlur("title")}
@@ -235,7 +244,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
 
                 <TextInput
                   style={[styles.input, styles.textArea]}
-                  placeholder="Nội dung ghi chú"
+                  placeholder={t('update_note.content_placeholder')} // Dịch "Nội dung ghi chú"
                   placeholderTextColor="#999"
                   onChangeText={handleChange("content")}
                   onBlur={handleBlur("content")}
@@ -248,7 +257,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                   <Text style={styles.error}>{errors.content}</Text>
                 )}
 
-                <Text style={styles.label}>Nhóm</Text>
+                <Text style={styles.label}>{t('update_note.group_label')}</Text> {/* Dịch "Nhóm" */}
 
                 <TouchableOpacity
                   style={styles.dropdown}
@@ -265,7 +274,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                 {dropdownVisible && (
                   <View style={[styles.dropdownList, { maxHeight: 200 }]}>
                     <ScrollView nestedScrollEnabled>
-                      {groups.map((group) => (
+                      {groups.map((group: GroupType) => (
                         <TouchableOpacity
                           key={group.id}
                           style={styles.dropdownItem}
@@ -289,12 +298,12 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                         });
                       }}
                     >
-                      <Text>Thêm mới</Text>
+                      <Text>{t('update_note.add_new_group_button')}</Text> {/* Dịch "Thêm mới" */}
                     </TouchableOpacity>
                   </View>
                 )}
 
-                <Text style={styles.label}>Hình ảnh ({images.length}/5)</Text>
+                <Text style={styles.label}>{t('update_note.images_label')} ({images.length}/5)</Text> {/* Dịch "Hình ảnh" */}
 
                 <View style={styles.imageContainer}>
                   {images.map((uri, index) => (
@@ -319,7 +328,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                 </View>
 
                 <Button
-                  title="Chỉnh sửa"
+                  title={t('update_note.update_button')} // Dịch "Chỉnh sửa"
                   size="large"
                   color={Colors.primary600}
                   onPress={handleSubmit}

@@ -7,6 +7,9 @@ import {
   updateGroup,
 } from "@/src/api/groupAPI";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import i18n from "../../i18n/i18n";
+// Import đối tượng i18n đã cấu hình
+
 interface GroupState {
   groups: GroupType[];
   loadingGroup: boolean;
@@ -16,12 +19,32 @@ interface GroupState {
   loadingMoreGroup: boolean;
   hasMoreGroup: boolean;
 }
+
 const initialState: GroupState = {
   groups: [],
   virtualGroups: [
-    { id: "all", name: "Tất cả", createdAt: "", noteCount: 0, order: 0 },
-    { id: "pinned", name: "Ghim", createdAt: "", noteCount: 0, order: 0 },
-    { id: "locked", name: "Đã khoá", createdAt: "", noteCount: 0, order: 0 },
+    // Dịch tên các nhóm ảo
+    {
+      id: "all",
+      name: i18n.t("virtual_groups.all"),
+      createdAt: "",
+      noteCount: 0,
+      order: 0,
+    },
+    {
+      id: "pinned",
+      name: i18n.t("virtual_groups.pinned"),
+      createdAt: "",
+      noteCount: 0,
+      order: 0,
+    },
+    {
+      id: "locked",
+      name: i18n.t("virtual_groups.locked"),
+      createdAt: "",
+      noteCount: 0,
+      order: 0,
+    },
   ],
   loadingGroup: false,
   error: null,
@@ -57,7 +80,9 @@ export const getGroupsStore = createAsyncThunk(
         lastOrder: newLastCreatedAt,
       };
     } catch (error: any) {
-      return rejectWithValue(error.message || "Lỗi khi lấy nhóm");
+      return rejectWithValue(
+        error.message || i18n.t("errors.get_groups_failed")
+      ); // Dịch lỗi
     }
   }
 );
@@ -69,10 +94,13 @@ export const getNoteStatsStore = createAsyncThunk(
       const stats = await getNoteStats(userId);
       return stats; // { all: x, pinned: y, locked: z }
     } catch (error: any) {
-      return rejectWithValue(error.message || "Lỗi khi lấy thống kê ghi chú");
+      return rejectWithValue(
+        error.message || i18n.t("errors.get_note_stats_failed")
+      ); // Dịch lỗi
     }
   }
 );
+
 export const createGroupStore = createAsyncThunk(
   "group/createGroup",
   async (
@@ -83,7 +111,9 @@ export const createGroupStore = createAsyncThunk(
       const newGroup = await createGroup(userId, name);
       return newGroup;
     } catch (error: any) {
-      return rejectWithValue(error.message || "Lỗi khi tạo nhóm");
+      return rejectWithValue(
+        error.message || i18n.t("errors.create_group_failed")
+      ); // Dịch lỗi
     }
   }
 );
@@ -102,7 +132,9 @@ export const updateGroupStore = createAsyncThunk(
       await updateGroup(userId, groupId, name);
       return { id: groupId, name };
     } catch (error: any) {
-      return rejectWithValue(error.message || "Lỗi khi cập nhật nhóm");
+      return rejectWithValue(
+        error.message || i18n.t("errors.update_group_failed")
+      ); // Dịch lỗi
     }
   }
 );
@@ -117,7 +149,9 @@ export const deleteGroupStore = createAsyncThunk(
       await deleteGroup(userId, groupId);
       return { id: groupId };
     } catch (error: any) {
-      return rejectWithValue(error.message || "Lỗi khi xoá nhóm");
+      return rejectWithValue(
+        error.message || i18n.t("errors.delete_group_failed")
+      ); // Dịch lỗi
     }
   }
 );
@@ -129,11 +163,24 @@ const groupSlice = createSlice({
     resetGroupState(state) {
       state.groups = [];
       state.virtualGroups = [
-        { id: "all", name: "Tất cả", createdAt: "", noteCount: 0, order: 0 },
-        { id: "pinned", name: "Ghim", createdAt: "", noteCount: 0, order: 0 },
+        // Dịch lại khi reset state
+        {
+          id: "all",
+          name: i18n.t("virtual_groups.all"),
+          createdAt: "",
+          noteCount: 0,
+          order: 0,
+        },
+        {
+          id: "pinned",
+          name: i18n.t("virtual_groups.pinned"),
+          createdAt: "",
+          noteCount: 0,
+          order: 0,
+        },
         {
           id: "locked",
-          name: "Đã khoá",
+          name: i18n.t("virtual_groups.locked"),
           createdAt: "",
           noteCount: 0,
           order: 0,
@@ -325,23 +372,24 @@ const groupSlice = createSlice({
         const { all, pinned, locked } = action.payload;
 
         state.virtualGroups = [
+          // Dịch lại khi cập nhật stats
           {
             id: "all",
-            name: "Tất cả",
+            name: i18n.t("virtual_groups.all"),
             createdAt: "",
             noteCount: all,
             order: 0,
           },
           {
             id: "pinned",
-            name: "Ghim",
+            name: i18n.t("virtual_groups.pinned"),
             createdAt: "",
             noteCount: pinned,
             order: 0,
           },
           {
             id: "locked",
-            name: "Đã khoá",
+            name: i18n.t("virtual_groups.locked"),
             createdAt: "",
             noteCount: locked,
             order: 0,

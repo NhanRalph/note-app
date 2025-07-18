@@ -24,6 +24,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp } from "@react-navigation/native";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -62,6 +63,8 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [lastOrder, setLastOrder] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(true);
+
+  const { t, i18n } = useTranslation(); 
 
   const {
     notes,
@@ -237,15 +240,15 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
       navigation.navigate("LoginScreen");
       return;
     }
-
+    
     if (groups.length === 0) {
       Alert.alert(
-        "Thông báo",
-        "Bạn chưa có nhóm nào. Vui lòng tạo nhóm trước khi tạo ghi chú.",
+        t('common.notification'),
+        t('list_notes.create_group_no_group'),
         [
-          { text: "Huỷ", style: "cancel" },
+          { text: t('common.cancel'), style: "cancel" },
           {
-            text: "Tạo nhóm",
+            text: t('common.create_group'),
             onPress: () =>
               navigation.navigate("CreateGroup", { userId: user.uid }),
           },
@@ -262,14 +265,14 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const handlePinNote = (note: NoteType) => {
     handleUnSelectItem();
     Alert.alert(
-      "Ghim ghi chú",
+      t('common.notification'),
       note.pinned
-        ? "Bạn có muốn bỏ ghim ghi chú này không?"
-        : "Bạn có muốn ghim ghi chú này không?",
+        ? t('list_notes.unpin_note')
+        : t('list_notes.pin_note'),
       [
-        { text: "Huỷ", style: "cancel", onPress: () => handleSelectItem(note) },
+        { text: t('common.cancel'), style: "cancel", onPress: () => handleSelectItem(note) },
         {
-          text: note.pinned ? "Bỏ ghim" : "Ghim",
+          text: note.pinned ? t('list_notes.unpin_note_button') : t('list_notes.pin_note_button'),
           onPress: async () => {
             try {
               handleUpdateNote({
@@ -283,14 +286,14 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
               Toast.show({
                 type: "success",
-                text1: "Thành công",
-                text2: "Đã ghim ghi chú",
+                text1: t('common.success'),
+                text2: t('list_notes.pinned_note'),
               });
             } catch (error) {
               console.error("Error pinning note:", error);
               Alert.alert(
-                "Lỗi",
-                "Không thể ghim ghi chú. Vui lòng thử lại sau."
+                t('common.error'),
+                t('list_notes.pin_note_failed')
               );
             }
           },
@@ -308,12 +311,15 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
   const handleDelete = (note: NoteType) => {
     handleUnSelectItem();
-    Alert.alert("Xoá ghi chú", "Bạn có chắc chắn muốn xoá ghi chú này không?", [
-      { text: "Huỷ", style: "cancel", onPress: () => handleSelectItem(note) },
-      {
-        text: "Xoá",
-        style: "destructive",
-        onPress: async () => {
+    Alert.alert(
+      t('common.notification'),
+      t('list_notes.delete_note_confirm'),
+      [
+        { text: t('common.cancel'), style: "cancel", onPress: () => handleSelectItem(note) },
+        {
+          text: t('common.delete'),
+          style: "destructive",
+          onPress: async () => {
           try {
             dispatch(
               batchChangeNoteStats([{ target: "all", type: "decrement" }])
@@ -332,12 +338,12 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
             Toast.show({
               type: "success",
-              text1: "Thành công",
-              text2: "Đã xoá thành công!",
+              text1: t('common.success'),
+              text2: t('list_notes.delete_note_success'),
             });
           } catch (error) {
             console.error("Error deleting note:", error);
-            Alert.alert("Lỗi", "Không thể xoá ghi chú. Vui lòng thử lại sau.");
+            Alert.alert(t('common.error'), t('list_notes.delete_note_failed'));
           }
         },
       },
@@ -347,14 +353,14 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const handleLockNote = (note: NoteType) => {
     handleUnSelectItem();
     Alert.alert(
-      note.locked ? "Mở khoá ghi chú" : "Khoá ghi chú",
+      note.locked ? t('list_notes.unlock_note') : t('list_notes.lock_note'),
       note.locked
-        ? "Bạn có muốn mở khoá ghi chú này không?"
-        : "Bạn có muốn khoá ghi chú này không?",
+        ? t('list_notes.unlock_note_confirm')
+        : t('list_notes.lock_note_confirm'),
       [
-        { text: "Huỷ", style: "cancel", onPress: () => handleSelectItem(note) },
+        { text: t('common.cancel'), style: "cancel", onPress: () => handleSelectItem(note) },
         {
-          text: note.locked ? "Mở khoá" : "Khoá",
+          text: note.locked ? t('list_notes.unlock_note_button') : t('list_notes.lock_note_button'),
           onPress: async () => {
             {
               try {
@@ -370,16 +376,16 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                 await toggleLockNote(user!.uid, note.id, !note.locked);
                 Toast.show({
                   type: "success",
-                  text1: "Thành công",
+                  text1: t('common.success'),
                   text2: note.locked
-                    ? "Đã mở khoá ghi chú!"
-                    : "Đã khoá ghi chú!",
+                    ? t('list_notes.unlock_note_success')
+                    : t('list_notes.lock_note_success'),
                 });
               } catch (error) {
                 console.error("Error locking/unlocking note:", error);
                 Alert.alert(
-                  "Lỗi",
-                  "Không thể thực hiện thao tác. Vui lòng thử lại sau."
+                  t('common.error'),
+                  t('common.try_again_later')
                 );
               }
             }
@@ -419,7 +425,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
         <TouchableOpacity style={styles.backBtn} onPress={handleHome}>
           <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Note Daily</Text>
+        <Text style={styles.headerTitle}>{t('list_notes.title')}</Text>
         <TouchableOpacity
           onPress={() => setViewMode(viewMode === "list" ? "grid" : "list")}
         >
@@ -439,7 +445,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
           style={{ marginRight: 8 }}
         />
         <TextInput
-          placeholder="Tìm kiếm ghi chú..."
+          placeholder={t('list_notes.search_placeholder')}
           style={styles.searchInput}
           value={searchKeyword}
           onChangeText={(text) => setSearchKeyword(text)}
@@ -533,7 +539,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
           ListFooterComponent={
             loadingMore ? (
               <View style={{ padding: 16, alignItems: "center" }}>
-                <Text style={{ color: "#888" }}>Đang tải thêm...</Text>
+                <Text style={{ color: "#888" }}>{t('list_notes.loading_more_notes')}</Text>
               </View>
             ) : null
           }
@@ -541,7 +547,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
             !loading ? (
               <View style={{ padding: 16, alignItems: "center" }}>
                 <Text style={{ color: "#888" }}>
-                  Chưa có ghi chú nào. Hãy tạo ghi chú mới!
+                  {t('list_notes.empty_state')}
                 </Text>
               </View>
             ) : null
@@ -577,7 +583,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
               >
                 <Text style={[styles.actionText, { color: "#a855f7" }]}>
                   <Ionicons name="bookmark" size={14} color={"#a855f7"} />{" "}
-                  {selectedNote.pinned ? "Bỏ ghim" : "Ghim"}
+                  {selectedNote.pinned ? t('list_notes.unpin_note_button') : t('list_notes.pin_note_button')}
                 </Text>
               </TouchableOpacity>
 
@@ -593,7 +599,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                     color={"#4b5563"}
                     style={{ marginLeft: 8 }}
                   />{" "}
-                  {selectedNote.locked ? "Mở khoá" : "Khoá"}
+                  {selectedNote.locked ? t('list_notes.unlock_note') : t('list_notes.lock_note')}
                 </Text>
               </TouchableOpacity>
 
@@ -604,8 +610,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                   onPress={() => handleEditNote(selectedNote)}
                 >
                   <Text style={[styles.actionText, { color: "#4b7bec" }]}>
-                    <Ionicons name="pencil" size={14} color={"#4b7bec"} /> Chỉnh
-                    sửa
+                    <Ionicons name="pencil" size={14} color={"#4b7bec"} /> {t('list_notes.edit_note')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -617,7 +622,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                   onPress={() => handleDelete(selectedNote)}
                 >
                   <Text style={[styles.actionText, { color: "#EF4444" }]}>
-                    <Ionicons name="trash" size={14} color={"#EF4444"} /> Xoá
+                    <Ionicons name="trash" size={14} color={"#EF4444"} /> {t('list_notes.delete_note')}
                   </Text>
                 </TouchableOpacity>
               )}

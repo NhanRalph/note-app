@@ -9,11 +9,16 @@ import { Formik } from 'formik';
 import { useEffect } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSelector } from 'react-redux';
+// Import hook useTranslation
+import { useTranslation } from "react-i18next";
 
 export default function LoginScreen() {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const { user, loading, error } = useSelector((state: RootState) => state.auth);
+
+  // Sử dụng hook useTranslation
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (user) {
@@ -41,7 +46,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Đăng nhập</Text>
+      <Text style={styles.title}>{t('login.screen_title')}</Text>
 
       <Formik
         initialValues={initialValues}
@@ -59,7 +64,7 @@ export default function LoginScreen() {
           <>
             <TextInput
               style={styles.input}
-              placeholder="Email"
+              placeholder={t('login.email_placeholder')}
               placeholderTextColor="#999"
               onChangeText={handleChange("email")}
               onBlur={handleBlur("email")}
@@ -73,7 +78,7 @@ export default function LoginScreen() {
 
             <TextInput
               style={styles.input}
-              placeholder="Mật khẩu"
+              placeholder={t('login.password_placeholder')}
               placeholderTextColor="#999"
               secureTextEntry
               onChangeText={handleChange("password")}
@@ -85,7 +90,7 @@ export default function LoginScreen() {
             )}
 
             <Button
-              title="Đăng nhập"
+              title={t('login.login_button')}
               size="large"
               color={Colors.primary600}
               onPress={handleSubmit}
@@ -99,25 +104,22 @@ export default function LoginScreen() {
         onPress={() => navigation.navigate("SignUpScreen")}
         style={styles.floatLeft}
       >
-        <Text style={styles.createAccountText}>Tạo tài khoản mới</Text>
+        <Text style={styles.createAccountText}>{t('login.create_account_link')}</Text>
       </TouchableOpacity>
 
-      <Text style={styles.orText}>Hoặc tiếp tục với</Text>
-
+      <Text style={styles.orText}>{t('login.or_continue_with')}</Text>
       <View style={styles.socialContainer}>
         <TouchableOpacity
           style={[styles.socialButton, { backgroundColor: "#DB4437" }]}
           onPress={loginGoogle}
         >
-          {/* <Image source={require('@/assets/google.png')} style={styles.socialIcon} /> */}
-          <Text style={styles.socialText}>Google</Text>
+          <Text style={styles.socialText}>{t('login.google_button')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.socialButton, { backgroundColor: "#3b5998" }]}
         >
-          {/* <Image source={require('@/assets/facebook.png')} style={styles.socialIcon} /> */}
-          <Text style={styles.socialText}>Facebook</Text>
+          <Text style={styles.socialText}>{t('login.facebook_button')}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -210,7 +210,7 @@ export default function HomeScreen() {
           style={{ marginRight: 8 }}
         />
         <TextInput
-          placeholder={t("home.search_placeholder")} // Dịch placeholder
+          placeholder={t("home.search_placeholder")}
           style={styles.searchInput}
           value={searchKeyword}
           onChangeText={(text) => setSearchKeyword(text)}
@@ -285,7 +285,7 @@ export default function HomeScreen() {
           ListFooterComponent={
             loadingMoreGroup ? (
               <View style={{ padding: 16, alignItems: "center" }}>
-                <Text style={{ color: "#888" }}>{t("home.loading_more_groups")}</Text> {/* Dịch */}
+                <Text style={{ color: "#888" }}>{t("home.loading_more_groups")}</Text>
               </View>
             ) : null
           }
@@ -294,7 +294,7 @@ export default function HomeScreen() {
             !loadingGroup && groups.length === 0 ? (
               <View style={{ padding: 16, alignItems: "center" }}>
                 <Text style={{ color: "#888" }}>
-                  {t("home.no_groups_found")} {/* Dịch */}
+                  {t("home.no_groups_found")}
                 </Text>
               </View>
             ) : null
@@ -328,7 +328,7 @@ export default function HomeScreen() {
               onPress={() => handleUpdateGroup(selectedGroupActionId!)}
             >
               <Text style={[styles.actionText, { color: "#4b7bec" }]}>
-                <Ionicons name="pencil" size={14} color={"#4b7bec"} /> {t('home.edit_group')} {/* Dịch */}
+                <Ionicons name="pencil" size={14} color={"#4b7bec"} /> {t('home.edit_group')}
               </Text>
             </TouchableOpacity>
 
@@ -337,7 +337,7 @@ export default function HomeScreen() {
               onPress={() => handleDeleteGroup(selectedGroupActionId!)}
             >
               <Text style={[styles.actionText, { color: "#EF4444" }]}>
-                <Ionicons name="trash" size={14} color={"#EF4444"} /> {t('common.delete')} {/* Dịch */}
+                <Ionicons name="trash" size={14} color={"#EF4444"} /> {t('common.delete')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity

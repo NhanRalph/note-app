@@ -16,17 +16,22 @@ import {
   View,
 } from "react-native";
 import { useSelector } from "react-redux";
+// Import hook useTranslation
+import { useTranslation } from "react-i18next";
 
-export default function LoginScreen() {
+export default function SignUpScreen() { // Đổi tên component từ LoginScreen thành SignUpScreen
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const { user, loading, error } = useSelector(
     (state: RootState) => state.auth
   );
 
+  // Sử dụng hook useTranslation
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (user) {
-      Alert.alert("Thành công", "Tạo tài khoản thành công!");
+      Alert.alert(t('signup.success_title'), t('signup.success_message')); // Dịch "Thành công", "Tạo tài khoản thành công!"
       navigation.navigate("Main", {
         screen: "Home",
       });
@@ -51,7 +56,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Đăng ký</Text>
+      <Text style={styles.title}>{t('signup.screen_title')}</Text> {/* Dịch "Đăng ký" */}
 
       <Formik
         initialValues={initialValues}
@@ -69,7 +74,7 @@ export default function LoginScreen() {
           <>
             <TextInput
               style={styles.input}
-              placeholder="Email"
+              placeholder={t('signup.email_placeholder')}
               placeholderTextColor="#999"
               onChangeText={handleChange("email")}
               onBlur={handleBlur("email")}
@@ -83,7 +88,7 @@ export default function LoginScreen() {
 
             <TextInput
               style={styles.input}
-              placeholder="Mật khẩu"
+              placeholder={t('signup.password_placeholder')}
               placeholderTextColor="#999"
               secureTextEntry
               onChangeText={handleChange("password")}
@@ -96,7 +101,7 @@ export default function LoginScreen() {
 
             <TextInput
               style={styles.input}
-              placeholder="Xác nhận mật khẩu"
+              placeholder={t('signup.confirm_password_placeholder')}
               placeholderTextColor="#999"
               secureTextEntry
               onChangeText={handleChange("confirmPassword")}
@@ -108,7 +113,7 @@ export default function LoginScreen() {
             )}
 
             <Button
-              title="Đăng nhập"
+              title={t('signup.signup_button')}
               size="large"
               color={Colors.primary600}
               onPress={handleSubmit}
@@ -122,10 +127,10 @@ export default function LoginScreen() {
         onPress={() => navigation.navigate("LoginScreen")}
         style={styles.floatLeft}
       >
-        <Text style={styles.createAccountText}>Tôi có tài khoản rồi</Text>
+        <Text style={styles.createAccountText}>{t('signup.already_have_account_link')}</Text>
       </TouchableOpacity>
 
-      <Text style={styles.orText}>Hoặc tiếp tục với</Text>
+      <Text style={styles.orText}>{t('signup.or_continue_with')}</Text>
 
       <View style={styles.socialContainer}>
         <TouchableOpacity
@@ -133,14 +138,14 @@ export default function LoginScreen() {
           onPress={loginGoogle}
         >
           {/* <Image source={require('@/assets/google.png')} style={styles.socialIcon} /> */}
-          <Text style={styles.socialText}>Google</Text>
+          <Text style={styles.socialText}>{t('signup.google_button')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.socialButton, { backgroundColor: "#3b5998" }]}
         >
           {/* <Image source={require('@/assets/facebook.png')} style={styles.socialIcon} /> */}
-          <Text style={styles.socialText}>Facebook</Text>
+          <Text style={styles.socialText}>{t('signup.facebook_button')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -196,8 +201,8 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   socialText: {
-    color: "#fff",
-    fontWeight: "bold",
+    color: '#fff',
+    fontWeight: 'bold',
   },
   floatLeft: {
     justifyContent: "flex-end",

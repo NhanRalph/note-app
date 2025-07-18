@@ -19,6 +19,8 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
+// Import hook useTranslation
+import { useTranslation } from "react-i18next";
 
 interface UpdateGroupScreenProps {
   route: RouteProp<RootStackParamList, "UpdateGroup">;
@@ -32,6 +34,9 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
   const navigation = useNavigation();
   const { loadingGroup, error } = useSelector((state: RootState) => state.group);
 
+  // Sử dụng hook useTranslation
+  const { t } = useTranslation();
+
   const initialValues = {
     name: name || "",
   };
@@ -42,19 +47,18 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
     dispatch(updateGroupStore({ userId, groupId, name: values.name }))
       .unwrap()
       .catch((err) => {
-        // rollback hoặc show error nếu cần
-        console.error("Lỗi khi gọi API updateGroup", err);
+        console.error(t('update_group.api_error'), err); // Dịch lỗi API
       });
     //check create group success
     if (error) {
-      Alert.alert("Error", error);
+      Alert.alert(t('common.error'), error); // Dịch tiêu đề "Error"
       return;
     }
 
     Toast.show({
       type: "success",
-      text1: "Thành công",
-      text2: "Đã chỉnh sửa thành công!",
+      text1: t('common.success'), // Dịch "Thành công"
+      text2: t('update_group.success_message'), // Dịch "Đã chỉnh sửa thành công!"
     });
     navigation.goBack();
   };
@@ -68,7 +72,8 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
       >
         <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
       </TouchableOpacity>
-      <Text style={styles.title}>Chỉnh sửa nhóm ghi chú</Text>
+      {/* Dịch tiêu đề màn hình */}
+      <Text style={styles.title}>{t('update_group.title')}</Text> 
 
       <Formik
         initialValues={initialValues}
@@ -87,7 +92,7 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
           <>
             <TextInput
               style={styles.input}
-              placeholder="Group Name"
+              placeholder={t('update_group.placeholder_name')} // Dịch placeholder
               placeholderTextColor="#999"
               onChangeText={handleChange("name")}
               onBlur={handleBlur("name")}
@@ -95,11 +100,12 @@ const UpdateGroupScreen: React.FC<UpdateGroupScreenProps> = ({ route }) => {
               autoCapitalize="none"
             />
             {touched.name && errors.name && (
+              // Giả định errors.name đã được dịch từ validationSchema hoặc bạn cần thêm logic dịch ở đây
               <Text style={styles.error}>{errors.name}</Text>
             )}
 
             <Button
-              title="Chỉnh sửa"
+              title={t('update_group.update_button')} // Dịch nút "Chỉnh sửa"
               size="large"
               color={Colors.primary600}
               onPress={handleSubmit}

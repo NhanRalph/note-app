@@ -32,6 +32,8 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
+// Import hook useTranslation
+import { useTranslation } from "react-i18next";
 
 interface CreateNoteScreenProps {
   route: RouteProp<RootStackParamList, "CreateNote">;
@@ -44,6 +46,9 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   const { groups } = useSelector((state: RootState) => state.group);
 
   const [draftNote, setDraftNote] = useState<NoteType | null>(null);
+
+  // Sử dụng hook useTranslation
+  const { t } = useTranslation();
 
   if (
     groupId === null ||
@@ -69,8 +74,8 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
     selectedGroupId === "all" ||
     selectedGroupId === "pinned" ||
     selectedGroupId === "locked"
-      ? "Không thuộc nhóm nào"
-      : groups.find((g) => g.id === selectedGroupId)?.name || "Không rõ";
+      ? t('create_note.no_group') // Dịch "Không thuộc nhóm nào"
+      : groups.find((g) => g.id === selectedGroupId)?.name || t('create_note.unknown_group'); // Dịch "Không rõ"
 
   const initialValues = {
     title: "",
@@ -80,19 +85,19 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   useEffect(() => {
     if (!userId || draftNote) return;
     const fetchDraftNote = async () => {
-      console.log("🌀 Bắt đầu tạo draft...");
+      console.log(t('create_note.creating_draft_start')); // Dịch "🌀 Bắt đầu tạo draft..."
 
       const isConnected = await hasInternetConnection();
       if (!isConnected) {
         const draft = await createDraftNote(userId);
-        console.log("✅ Draft Offline tạo xong:", draft);
+        console.log(t('create_note.draft_offline_success'), draft); // Dịch "✅ Draft Offline tạo xong:"
         setDraftNote(draft);
         return;
       }
 
       try {
         const draft = await createDraftNote(userId);
-        console.log("✅ Draft tạo xong:", draft);
+        console.log(t('create_note.draft_success'), draft); // Dịch "✅ Draft tạo xong:"
 
         if (draft) {
           setDraftNote(draft);
@@ -100,7 +105,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
         }
       } catch (error) {
         console.error("❌ Lỗi khi tạo draft:", error);
-        Alert.alert("Lỗi", "Không thể tạo ghi chú nháp. Vui lòng thử lại.");
+        Alert.alert(t('common.error'), t('create_note.draft_creation_failed')); // Dịch "Lỗi", "Không thể tạo ghi chú nháp. Vui lòng thử lại."
       }
     };
 
@@ -109,12 +114,12 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
   const handlePickImage = async () => {
     if (images.length >= 5) {
-      Alert.alert("Thông báo", "Chỉ chọn tối đa 5 hình ảnh.");
+      Alert.alert(t('common.notification'), t('create_note.max_images_reached')); // Dịch "Thông báo", "Chỉ chọn tối đa 5 hình ảnh."
       return;
     }
 
     if (!draftNote) {
-      Alert.alert("Thông báo", "Ghi chú chưa được khởi tạo.");
+      Alert.alert(t('common.notification'), t('create_note.note_not_initialized')); // Dịch "Thông báo", "Ghi chú chưa được khởi tạo."
       return;
     }
 
@@ -125,7 +130,6 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selectedUri = result.assets[0].uri;
-      // setImages((prev) => [...prev, selectedUri]);
       navigation.navigate("DrawScreen", {
         userId: userId,
         noteId: draftNote.id,
@@ -154,12 +158,12 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   const handleSubmit = async (values: { title: string; content: string }) => {
     try {
       if (!selectedGroupId) {
-        Alert.alert("Thông báo", "Vui lòng chọn nhóm cho ghi chú.");
+        Alert.alert(t('common.notification'), t('create_note.select_group_required')); // Dịch "Thông báo", "Vui lòng chọn nhóm cho ghi chú."
         return;
       }
 
       if (!draftNote) {
-        Alert.alert("Thông báo", "Ghi chú chưa được khởi tạo.");
+        Alert.alert(t('common.notification'), t('create_note.note_not_initialized')); // Dịch "Thông báo", "Ghi chú chưa được khởi tạo."
         return;
       }
 
@@ -181,8 +185,8 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
         Toast.show({
           type: "success",
-          text1: "Thành công",
-          text2: "Đã tạo ghi chú!",
+          text1: t('common.success'), // Dịch "Thành công"
+          text2: t('create_note.create_success'), // Dịch "Đã tạo ghi chú!"
         });
 
         navigation.goBack();
@@ -208,8 +212,8 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
         Toast.show({
           type: "info",
-          text1: "Đã lưu offline",
-          text2: "Ghi chú sẽ được đồng bộ khi có mạng.",
+          text1: t('create_note.saved_offline_title'), // Dịch "Đã lưu offline"
+          text2: t('create_note.saved_offline_message'), // Dịch "Ghi chú sẽ được đồng bộ khi có mạng."
         });
 
         navigation.goBack();
@@ -218,7 +222,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
       }
     } catch (error) {
       console.error("Error creating note:", error);
-      Alert.alert("Lỗi", "Không thể tạo ghi chú.");
+      Alert.alert(t('common.error'), t('create_note.create_failed')); // Dịch "Lỗi", "Không thể tạo ghi chú."
     } finally {
       setLoading(false);
     }
@@ -232,12 +236,12 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
     if (images.length > 0 || values.title || values.content) {
       Alert.alert(
-        "Xác nhận",
-        "Bạn có chắc muốn rời khỏi trang này? Tất cả thay đổi sẽ không được lưu.",
+        t('common.confirmation'), // Dịch "Xác nhận"
+        t('create_note.exit_confirm_message'), // Dịch "Bạn có chắc muốn rời khỏi trang này? Tất cả thay đổi sẽ không được lưu."
         [
-          { text: "Hủy", style: "cancel" },
+          { text: t('common.cancel'), style: "cancel" }, // Dịch "Hủy"
           {
-            text: "Rời khỏi",
+            text: t('create_note.exit_confirm_button'), // Dịch "Rời khỏi"
             onPress: async () => {
               await deleteNote(userId, draftNote.id)
               navigation.goBack()
@@ -255,7 +259,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   // if (!draftNote) {
   //   return (
   //     <View style={styles.container}>
-  //       <Text>Đang khởi tạo ghi chú nháp...</Text>
+  //       <Text>Đang khởi tạo ghi chú nháp...</Text> // Dịch
   //     </View>
   //   );
   // }
@@ -291,14 +295,14 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
       >
-        <Text style={styles.title}>Tạo ghi chú</Text>
+        <Text style={styles.title}>{t('create_note.screen_title')}</Text> {/* Dịch "Tạo ghi chú" */}
         <Text style={styles.title}>{draftNote?.id ? draftNote.id : ""}</Text>
 
         
             <>
               <TextInput
                 style={styles.input}
-                placeholder="Tiêu đề ghi chú"
+                placeholder={t('create_note.title_placeholder')} // Dịch "Tiêu đề ghi chú"
                 placeholderTextColor="#999"
                 onChangeText={handleChange("title")}
                 onBlur={handleBlur("title")}
@@ -310,7 +314,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Nội dung ghi chú"
+                placeholder={t('create_note.content_placeholder')} // Dịch "Nội dung ghi chú"
                 placeholderTextColor="#999"
                 onChangeText={handleChange("content")}
                 onBlur={handleBlur("content")}
@@ -322,7 +326,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
                 <Text style={styles.error}>{errors.content}</Text>
               )}
 
-              <Text style={styles.label}>Nhóm</Text>
+              <Text style={styles.label}>{t('create_note.group_label')}</Text> {/* Dịch "Nhóm" */}
 
               <TouchableOpacity
                 style={styles.dropdown}
@@ -361,12 +365,12 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
                       navigation.navigate("CreateGroup", { userId: userId });
                     }}
                   >
-                    <Text>Thêm mới</Text>
+                    <Text>{t('create_note.add_new_group_button')}</Text> {/* Dịch "Thêm mới" */}
                   </TouchableOpacity>
                 </View>
               )}
 
-              <Text style={styles.label}>Hình ảnh ({images.length}/5)</Text>
+              <Text style={styles.label}>{t('create_note.images_label')} ({images.length}/5)</Text> {/* Dịch "Hình ảnh" */}
 
               <View style={styles.imageContainer}>
                 {images.map((uri, index) => (
@@ -391,7 +395,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
               </View>
 
               <Button
-                title="Tạo ghi chú"
+                title={t('create_note.create_note_button')}
                 size="large"
                 color={Colors.primary600}
                 onPress={handleSubmit}

@@ -5,6 +5,7 @@ import { useNavigation } from "@/src/hook/useNavigation";
 import { RootState } from "@/src/redux/rootReducer";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Image,
@@ -27,43 +28,44 @@ export default function NoteDetailScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // const { note } = route.params;
   const { selectedNote, handleUpdateNote, handleDeleteNote } = useNoteContext();
+  const { t } = useTranslation();
 
   if (!selectedNote) {
-    // Alert.alert("Lỗi", "Không tìm thấy ghi chú. Vui lòng thử lại sau.");
+    Alert.alert(t('common.error'), t('note_detail.note_not_found_error'));
     navigation.goBack();
     return null;
   }
+
   const selectedGroupName =
     selectedNote.groupId === null
-      ? "Không thuộc nhóm nào"
-      : groups.find((g) => g.id === selectedNote.groupId)?.name || "Không rõ";
+      ? t('note_detail.no_group')
+      : groups.find((g) => g.id === selectedNote.groupId)?.name || t('note_detail.unknown_group');
 
   const handleEdit = () => {
     navigation.navigate("UpdateNote", { note: selectedNote });
   };
 
   const handleDelete = () => {
-    Alert.alert("Xoá ghi chú", "Bạn có chắc chắn muốn xoá ghi chú này không?", [
-      { text: "Huỷ", style: "cancel" },
+    Alert.alert(t('note_detail.delete_note_title'), t('note_detail.delete_note_confirm'), 
+    [
+      { text: t('common.cancel'), style: "cancel" },
       {
-        text: "Xoá",
+        text: t('common.delete'),
         style: "destructive",
         onPress: async () => {
           try {
-            // Call delete API here
             await deleteNote(user!.uid, selectedNote.id);
             Toast.show({
               type: "success",
-              text1: "Thành công",
-              text2: "Đã xoá ghi chú",
+              text1: t('common.success'),
+              text2: t('note_detail.delete_note_success'),
             });
             handleDeleteNote(selectedNote.id);
             navigation.goBack();
           } catch (error) {
             console.error("Error deleting note:", error);
-            Alert.alert("Lỗi", "Không thể xoá ghi chú. Vui lòng thử lại sau.");
+            Alert.alert(t('common.error'), t('note_detail.delete_note_failed'));
           }
         },
       },
@@ -72,28 +74,27 @@ export default function NoteDetailScreen() {
 
   const handleLock = () => {
     Alert.alert(
-      selectedNote.locked ? "Mở khoá ghi chú" : "Khoá ghi chú",
+      selectedNote.locked ? t('note_detail.unlock_note_title') : t('note_detail.lock_note_title'),
       selectedNote.locked
-        ? "Bạn có muốn mở khoá ghi chú này không?"
-        : "Bạn có muốn khoá ghi chú này không?",
+        ? t('note_detail.unlock_note_confirm')
+        : t('note_detail.lock_note_confirm'),
       [
-        { text: "Huỷ", style: "cancel" },
+        { text: t('common.cancel'), style: "cancel" },
         {
-          text: selectedNote.locked ? "Mở khoá" : "Khoá",
+          text: selectedNote.locked ? t('note_detail.unlock_button') : t('note_detail.lock_button'),
           onPress: async () => {
             {
               try {
-                // Call lock/unlock API here
                 await toggleLockNote(
                   user!.uid,
                   selectedNote.id,
                   !selectedNote.locked
                 );
                 Alert.alert(
-                  "Thành công",
+                  t('common.success'),
                   selectedNote.locked
-                    ? "Đã mở khoá ghi chú!"
-                    : "Đã khoá ghi chú!"
+                    ? t('note_detail.unlock_note_success')
+                    : t('note_detail.lock_note_success')
                 );
                 handleUpdateNote({
                   ...selectedNote,
@@ -102,8 +103,8 @@ export default function NoteDetailScreen() {
               } catch (error) {
                 console.error("Error locking/unlocking note:", error);
                 Alert.alert(
-                  "Lỗi",
-                  "Không thể thực hiện thao tác. Vui lòng thử lại sau."
+                  t('common.error'),
+                  t('note_detail.lock_unlock_failed')
                 );
               }
             }
@@ -115,24 +116,16 @@ export default function NoteDetailScreen() {
 
   const handleShare = async () => {
     try {
-
-      // trong trường hợp có ảnh, thì show link các ảnh ra trong sharedMessage
-      const shareMessage = `Title: ${selectedNote.title}
-      
-${selectedNote.content}
-
-${selectedNote.images && selectedNote.images.length > 0
+      const shareMessage = `${t('note_detail.share_title_label')}: ${selectedNote.title}\n\n${selectedNote.content}\n\n${selectedNote.images && selectedNote.images.length > 0
         ? selectedNote.images.map((img) => `${img}`).join("\n\n")
-        : "Không có hình ảnh đính kèm."}
-
-Shared from MyNotesApp`;
+        : t('note_detail.no_images_attached')}\n\n${t('note_detail.shared_from_app')}`;
 
       let shareOptions: {
         title: string;
         message: string;
         type: string;
       } = {
-        title: "Chia sẻ ghi chú của bạn",
+        title: t('note_detail.share_note_title'),
         message: shareMessage,
         type: "text/plain"
       };
@@ -140,8 +133,8 @@ Shared from MyNotesApp`;
       await Share.open(shareOptions);
       Toast.show({
         type: "success",
-        text1: "Thành công",
-        text2: "Ghi chú đã được chia sẻ!",
+        text1: t('common.success'),
+        text2: t('note_detail.share_note_success'),
       });
     } catch (error) {
       if (
@@ -151,14 +144,13 @@ Shared from MyNotesApp`;
         typeof (error as { message?: unknown }).message === "string" &&
         (error as { message: string }).message !== "User did not share"
       ) {
-        Alert.alert("Lỗi", "Không thể chia sẻ ghi chú. Vui lòng thử lại sau.");
+        Alert.alert(t('common.error'), t('note_detail.share_note_failed'));
       }
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -166,19 +158,17 @@ Shared from MyNotesApp`;
         >
           <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chi tiết ghi chú</Text>
+        <Text style={styles.headerTitle}>{t('note_detail.screen_title')}</Text>
         <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
           <Ionicons name="share-outline" size={24} color={Colors.primary600} />
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Title */}
         <Text style={styles.title}>{selectedNote.title}</Text>
 
-        <Text style={styles.groupText}>Nhóm: {selectedGroupName}</Text>
+        <Text style={styles.groupText}>{t('note_detail.group_label')}: {selectedGroupName}</Text>
 
-        {/* Icons */}
         <View style={styles.iconRow}>
           {selectedNote.pinned && (
             <Ionicons
@@ -198,14 +188,12 @@ Shared from MyNotesApp`;
           )}
         </View>
 
-        {/* Content */}
         <Text style={styles.content}>{selectedNote.content}</Text>
 
-        {/* Images */}
         {selectedNote.images && selectedNote.images.length > 0 && (
           <>
             <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 8 }}>
-              Hình ảnh:
+              {t('note_detail.images_label')}:
             </Text>
             <View style={styles.imageContainer}>
               {selectedNote.images.map((img, index) => (
@@ -224,12 +212,11 @@ Shared from MyNotesApp`;
         )}
       </ScrollView>
 
-      {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>
         {!selectedNote.locked && (
           <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
             <Ionicons name="create-outline" size={18} color="#fff" />
-            <Text style={styles.actionButtonText}>Chỉnh sửa</Text>
+            <Text style={styles.actionButtonText}>{t('note_detail.edit_button')}</Text>
           </TouchableOpacity>
         )}
         {!selectedNote.locked && (
@@ -238,7 +225,7 @@ Shared from MyNotesApp`;
             onPress={handleDelete}
           >
             <Ionicons name="trash-outline" size={18} color="#fff" />
-            <Text style={styles.actionButtonText}>Xoá</Text>
+            <Text style={styles.actionButtonText}>{t('common.delete')}</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
@@ -253,7 +240,7 @@ Shared from MyNotesApp`;
             color="#fff"
           />
           <Text style={styles.actionButtonText}>
-            {selectedNote.locked ? "Mở khoá" : "Khoá"}
+            {selectedNote.locked ? t('note_detail.unlock_button') : t('note_detail.lock_button')}
           </Text>
         </TouchableOpacity>
       </View>
