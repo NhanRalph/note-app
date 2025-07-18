@@ -189,5 +189,13 @@
     "facebook_button": "Facebook",
     "success_title": "Success",
     "success_message": "Account created successfully!"
+  },
+  "sync_loading": {
+    "internet_connected_title": "Internet Connected",
+    "internet_connected_message": "Your device is connected to the internet. Starting data synchronization...",
+    "internet_disconnected_title": "Internet Disconnected",
+    "internet_disconnected_message": "Your device is not connected to the internet. Please check your connection.",
+    "sync_progress": "Syncing data: {{progress}}%",
+    "sync_complete": "Synchronization complete!"
   }
 }

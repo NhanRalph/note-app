@@ -56,7 +56,7 @@ export default function SignUpScreen() { // Đổi tên component từ LoginScre
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t('signup.screen_title')}</Text> {/* Dịch "Đăng ký" */}
+      <Text style={styles.title}>{t('signup.screen_title')}</Text>
 
       <Formik
         initialValues={initialValues}
@@ -137,14 +137,12 @@ export default function SignUpScreen() { // Đổi tên component từ LoginScre
           style={[styles.socialButton, { backgroundColor: "#DB4437" }]}
           onPress={loginGoogle}
         >
-          {/* <Image source={require('@/assets/google.png')} style={styles.socialIcon} /> */}
           <Text style={styles.socialText}>{t('signup.google_button')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.socialButton, { backgroundColor: "#3b5998" }]}
         >
-          {/* <Image source={require('@/assets/facebook.png')} style={styles.socialIcon} /> */}
           <Text style={styles.socialText}>{t('signup.facebook_button')}</Text>
         </TouchableOpacity>
       </View>

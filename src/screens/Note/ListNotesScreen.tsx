@@ -64,7 +64,7 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const [lastOrder, setLastOrder] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  const { t, i18n } = useTranslation(); 
+  const { t, i18n } = useTranslation();
 
   const {
     notes,
@@ -240,15 +240,15 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
       navigation.navigate("LoginScreen");
       return;
     }
-    
+
     if (groups.length === 0) {
       Alert.alert(
-        t('common.notification'),
-        t('list_notes.create_group_no_group'),
+        t("common.notification"),
+        t("list_notes.create_group_no_group"),
         [
-          { text: t('common.cancel'), style: "cancel" },
+          { text: t("common.cancel"), style: "cancel" },
           {
-            text: t('common.create_group'),
+            text: t("common.create_group"),
             onPress: () =>
               navigation.navigate("CreateGroup", { userId: user.uid }),
           },
@@ -265,14 +265,18 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const handlePinNote = (note: NoteType) => {
     handleUnSelectItem();
     Alert.alert(
-      t('common.notification'),
-      note.pinned
-        ? t('list_notes.unpin_note')
-        : t('list_notes.pin_note'),
+      t("common.notification"),
+      note.pinned ? t("list_notes.unpin_note") : t("list_notes.pin_note"),
       [
-        { text: t('common.cancel'), style: "cancel", onPress: () => handleSelectItem(note) },
         {
-          text: note.pinned ? t('list_notes.unpin_note_button') : t('list_notes.pin_note_button'),
+          text: t("common.cancel"),
+          style: "cancel",
+          onPress: () => handleSelectItem(note),
+        },
+        {
+          text: note.pinned
+            ? t("list_notes.unpin_note_button")
+            : t("list_notes.pin_note_button"),
           onPress: async () => {
             try {
               handleUpdateNote({
@@ -286,15 +290,12 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
               Toast.show({
                 type: "success",
-                text1: t('common.success'),
-                text2: t('list_notes.pinned_note'),
+                text1: t("common.success"),
+                text2: t("list_notes.pinned_note"),
               });
             } catch (error) {
               console.error("Error pinning note:", error);
-              Alert.alert(
-                t('common.error'),
-                t('list_notes.pin_note_failed')
-              );
+              Alert.alert(t("common.error"), t("list_notes.pin_note_failed"));
             }
           },
         },
@@ -311,15 +312,16 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
   const handleDelete = (note: NoteType) => {
     handleUnSelectItem();
-    Alert.alert(
-      t('common.notification'),
-      t('list_notes.delete_note_confirm'),
-      [
-        { text: t('common.cancel'), style: "cancel", onPress: () => handleSelectItem(note) },
-        {
-          text: t('common.delete'),
-          style: "destructive",
-          onPress: async () => {
+    Alert.alert(t("common.notification"), t("list_notes.delete_note_confirm"), [
+      {
+        text: t("common.cancel"),
+        style: "cancel",
+        onPress: () => handleSelectItem(note),
+      },
+      {
+        text: t("common.delete"),
+        style: "destructive",
+        onPress: async () => {
           try {
             dispatch(
               batchChangeNoteStats([{ target: "all", type: "decrement" }])
@@ -338,12 +340,12 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
 
             Toast.show({
               type: "success",
-              text1: t('common.success'),
-              text2: t('list_notes.delete_note_success'),
+              text1: t("common.success"),
+              text2: t("list_notes.delete_note_success"),
             });
           } catch (error) {
             console.error("Error deleting note:", error);
-            Alert.alert(t('common.error'), t('list_notes.delete_note_failed'));
+            Alert.alert(t("common.error"), t("list_notes.delete_note_failed"));
           }
         },
       },
@@ -353,14 +355,20 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
   const handleLockNote = (note: NoteType) => {
     handleUnSelectItem();
     Alert.alert(
-      note.locked ? t('list_notes.unlock_note') : t('list_notes.lock_note'),
+      note.locked ? t("list_notes.unlock_note") : t("list_notes.lock_note"),
       note.locked
-        ? t('list_notes.unlock_note_confirm')
-        : t('list_notes.lock_note_confirm'),
+        ? t("list_notes.unlock_note_confirm")
+        : t("list_notes.lock_note_confirm"),
       [
-        { text: t('common.cancel'), style: "cancel", onPress: () => handleSelectItem(note) },
         {
-          text: note.locked ? t('list_notes.unlock_note_button') : t('list_notes.lock_note_button'),
+          text: t("common.cancel"),
+          style: "cancel",
+          onPress: () => handleSelectItem(note),
+        },
+        {
+          text: note.locked
+            ? t("list_notes.unlock_note_button")
+            : t("list_notes.lock_note_button"),
           onPress: async () => {
             {
               try {
@@ -376,17 +384,14 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                 await toggleLockNote(user!.uid, note.id, !note.locked);
                 Toast.show({
                   type: "success",
-                  text1: t('common.success'),
+                  text1: t("common.success"),
                   text2: note.locked
-                    ? t('list_notes.unlock_note_success')
-                    : t('list_notes.lock_note_success'),
+                    ? t("list_notes.unlock_note_success")
+                    : t("list_notes.lock_note_success"),
                 });
               } catch (error) {
                 console.error("Error locking/unlocking note:", error);
-                Alert.alert(
-                  t('common.error'),
-                  t('common.try_again_later')
-                );
+                Alert.alert(t("common.error"), t("common.try_again_later"));
               }
             }
           },
@@ -418,145 +423,157 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
     navigation.goBack();
   };
 
+  if (loading && sortedNotes.length === 0) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator
+          size="large"
+          color={Colors.primary600}
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={handleHome}>
-          <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('list_notes.title')}</Text>
-        <TouchableOpacity
-          onPress={() => setViewMode(viewMode === "list" ? "grid" : "list")}
-        >
-          <Ionicons
-            name={viewMode === "list" ? "grid" : "list"}
-            size={24}
-            color="black"
-          />
-        </TouchableOpacity>
-      </View>
+      <DraggableFlatList
+        data={sortedNotes}
+        key={viewMode}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
+        numColumns={viewMode === "grid" ? 2 : 1}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+        onDragEnd={async ({ data }) => {
+          console.log("Reordered data:", data);
+          const reorderedNotes = data.map((note, index) => ({
+            ...note,
+            order: index, // Gán lại thứ tự mới
+          }));
+          // Cập nhật thứ tự ghi chú trong cơ sở dữ liệu
+          console.log("Reordered notes: 2", reorderedNotes);
+          await updateNoteOrder(userId, reorderedNotes);
+          setSortedNotes(data);
+        }}
+        renderItem={({ item, drag, isActive }) => (
+          <View
+            style={
+              viewMode === "grid"
+                ? { width: "48%", marginHorizontal: "1%", marginBottom: 12 }
+                : undefined
+            }
+          >
+            <NoteItem
+              note={item}
+              viewMode={viewMode}
+              changeFlag={handleChangeFlag}
+              onLongPressNote={() => {
+                handleSelectItem(item);
+              }}
+              drag={drag}
+              handlePinNote={handlePinNote}
+              handleEdit={handleEditNote}
+              handleDelete={handleDelete}
+              handleLock={handleLockNote}
+              handleUnSelectItem={handleUnSelectItem}
+              setOpenedSwipeRef={setOpenedSwipeRef}
+            />
+          </View>
+        )}
+        activationDistance={20}
+        onEndReached={() => {
+          if (!user || loadingMore || !hasMore) return;
 
-      <View style={styles.searchContainer}>
-        <Ionicons
-          name="search"
-          size={20}
-          color="#888"
-          style={{ marginRight: 8 }}
-        />
-        <TextInput
-          placeholder={t('list_notes.search_placeholder')}
-          style={styles.searchInput}
-          value={searchKeyword}
-          onChangeText={(text) => setSearchKeyword(text)}
-        />
-      </View>
-
-      {/* Notes */}
-      {loading && sortedNotes.length === 0 ? (
-        <View style={styles.container}>
-          <ActivityIndicator
-            size="large"
-            color={Colors.primary600}
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-          />
-        </View>
-      ) : (
-        <DraggableFlatList
-          data={sortedNotes}
-          key={viewMode}
-          keyExtractor={(item, index) => `${item.id}-${index}`}
-          numColumns={viewMode === "grid" ? 2 : 1}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          if (selectedGroupId === "all") {
+            fetchNotesByType({
+              userId: user.uid,
+              type: "all",
+              keyword: debouncedKeyword,
+              isLoadMore: true,
+            });
+          } else if (selectedGroupId === "pinned") {
+            fetchNotesByType({
+              userId: user.uid,
+              type: "pinned",
+              keyword: debouncedKeyword,
+              isLoadMore: true,
+            });
+          } else {
+            fetchNotesByType({
+              userId: user.uid,
+              type: "locked",
+              groupId: selectedGroupId,
+              keyword: debouncedKeyword,
+              isLoadMore: true,
+            });
           }
-          onDragEnd={async ({ data }) => {
-            console.log("Reordered data:", data);
-            const reorderedNotes = data.map((note, index) => ({
-              ...note,
-              order: index, // Gán lại thứ tự mới
-            }));
-            // Cập nhật thứ tự ghi chú trong cơ sở dữ liệu
-            console.log("Reordered notes: 2", reorderedNotes);
-            await updateNoteOrder(userId, reorderedNotes);
-            setSortedNotes(data);
-          }}
-          renderItem={({ item, drag, isActive }) => (
-            <View
-              style={
-                viewMode === "grid"
-                  ? { width: "48%", marginHorizontal: "1%", marginBottom: 12 }
-                  : undefined
-              }
-            >
-              <NoteItem
-                note={item}
-                viewMode={viewMode}
-                changeFlag={handleChangeFlag}
-                onLongPressNote={() => {
-                  handleSelectItem(item);
-                }}
-                drag={drag}
-                handlePinNote={handlePinNote}
-                handleEdit={handleEditNote}
-                handleDelete={handleDelete}
-                handleLock={handleLockNote}
-                handleUnSelectItem={handleUnSelectItem}
-                setOpenedSwipeRef={setOpenedSwipeRef}
+        }}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={{ padding: 16, alignItems: "center" }}>
+              <Text style={{ color: "#888" }}>
+                {t("list_notes.loading_more_notes")}
+              </Text>
+            </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          !loading ? (
+            <View style={{ padding: 16, alignItems: "center" }}>
+              <Text style={{ color: "#888" }}>
+                {t("list_notes.empty_state")}
+              </Text>
+            </View>
+          ) : null
+        }
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity style={styles.backBtn} onPress={handleHome}>
+                <Ionicons
+                  name="arrow-back"
+                  size={24}
+                  color={Colors.primary600}
+                />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>{t("list_notes.title")}</Text>
+              <TouchableOpacity
+                onPress={() =>
+                  setViewMode(viewMode === "list" ? "grid" : "list")
+                }
+              >
+                <Ionicons
+                  name={viewMode === "list" ? "grid" : "list"}
+                  size={24}
+                  color="black"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.searchContainer}>
+              <Ionicons
+                name="search"
+                size={20}
+                color="#888"
+                style={{ marginRight: 8 }}
+              />
+              <TextInput
+                placeholder={t("list_notes.search_placeholder")}
+                style={styles.searchInput}
+                value={searchKeyword}
+                onChangeText={(text) => setSearchKeyword(text)}
               />
             </View>
-          )}
-          activationDistance={20}
-          onEndReached={() => {
-            if (!user || loadingMore || !hasMore) return;
-
-            if (selectedGroupId === "all") {
-              fetchNotesByType({
-                userId: user.uid,
-                type: "all",
-                keyword: debouncedKeyword,
-                isLoadMore: true,
-              });
-            } else if (selectedGroupId === "pinned") {
-              fetchNotesByType({
-                userId: user.uid,
-                type: "pinned",
-                keyword: debouncedKeyword,
-                isLoadMore: true,
-              });
-            } else {
-              fetchNotesByType({
-                userId: user.uid,
-                type: "locked",
-                groupId: selectedGroupId,
-                keyword: debouncedKeyword,
-                isLoadMore: true,
-              });
-            }
-          }}
-          onEndReachedThreshold={0.3}
-          ListFooterComponent={
-            loadingMore ? (
-              <View style={{ padding: 16, alignItems: "center" }}>
-                <Text style={{ color: "#888" }}>{t('list_notes.loading_more_notes')}</Text>
-              </View>
-            ) : null
-          }
-          ListEmptyComponent={
-            !loading ? (
-              <View style={{ padding: 16, alignItems: "center" }}>
-                <Text style={{ color: "#888" }}>
-                  {t('list_notes.empty_state')}
-                </Text>
-              </View>
-            ) : null
-          }
-          containerStyle={{
-            paddingBottom: 100,
-          }}
-        />
-      )}
+          </>
+        }
+        // containerStyle={{
+        //   paddingBottom: 100,
+        // }}
+      />
 
       {/* Nút thêm Note */}
       <TouchableOpacity style={styles.addNoteBtn} onPress={createNote}>
@@ -583,7 +600,9 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
               >
                 <Text style={[styles.actionText, { color: "#a855f7" }]}>
                   <Ionicons name="bookmark" size={14} color={"#a855f7"} />{" "}
-                  {selectedNote.pinned ? t('list_notes.unpin_note_button') : t('list_notes.pin_note_button')}
+                  {selectedNote.pinned
+                    ? t("list_notes.unpin_note_button")
+                    : t("list_notes.pin_note_button")}
                 </Text>
               </TouchableOpacity>
 
@@ -599,7 +618,9 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                     color={"#4b5563"}
                     style={{ marginLeft: 8 }}
                   />{" "}
-                  {selectedNote.locked ? t('list_notes.unlock_note') : t('list_notes.lock_note')}
+                  {selectedNote.locked
+                    ? t("list_notes.unlock_note")
+                    : t("list_notes.lock_note")}
                 </Text>
               </TouchableOpacity>
 
@@ -610,7 +631,8 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                   onPress={() => handleEditNote(selectedNote)}
                 >
                   <Text style={[styles.actionText, { color: "#4b7bec" }]}>
-                    <Ionicons name="pencil" size={14} color={"#4b7bec"} /> {t('list_notes.edit_note')}
+                    <Ionicons name="pencil" size={14} color={"#4b7bec"} />{" "}
+                    {t("list_notes.edit_note")}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -622,7 +644,8 @@ const ListNotesScreen: React.FC<ListNotesScreenProps> = ({ route }) => {
                   onPress={() => handleDelete(selectedNote)}
                 >
                   <Text style={[styles.actionText, { color: "#EF4444" }]}>
-                    <Ionicons name="trash" size={14} color={"#EF4444"} /> {t('list_notes.delete_note')}
+                    <Ionicons name="trash" size={14} color={"#EF4444"} />{" "}
+                    {t("list_notes.delete_note")}
                   </Text>
                 </TouchableOpacity>
               )}

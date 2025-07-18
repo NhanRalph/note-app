@@ -5,6 +5,8 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { syncOfflineNoteImages } from "../utils/syncImage";
+// Import đối tượng i18n đã cấu hình
+import i18n from "../i18n/i18n"; // Đảm bảo đường dẫn chính xác đến file i18n của bạn
 
 const withSyncLoading = <P extends object>(
   WrappedComponent: React.ComponentType<P>
@@ -18,9 +20,8 @@ const withSyncLoading = <P extends object>(
         if (state.isConnected) {
           Toast.show({
             type: "success",
-            text1: "Kết nối Internet",
-            text2:
-              "Thiết bị của bạn đã kết nối internet. Bắt đầu đồng bộ dữ liệu...",
+            text1: i18n.t("sync_loading.internet_connected_title"), // Dịch "Kết nối Internet"
+            text2: i18n.t("sync_loading.internet_connected_message"), // Dịch "Thiết bị của bạn đã kết nối internet. Bắt đầu đồng bộ dữ liệu..."
           });
           const userId = auth().currentUser?.uid;
 
@@ -48,9 +49,8 @@ const withSyncLoading = <P extends object>(
         } else {
           Toast.show({
             type: "error",
-            text1: "Mất kết nối Internet",
-            text2:
-              "Thiết bị của bạn không có kết nối internet. Vui lòng kiểm tra lại.",
+            text1: i18n.t("sync_loading.internet_disconnected_title"), // Dịch "Mất kết nối Internet"
+            text2: i18n.t("sync_loading.internet_disconnected_message"), // Dịch "Thiết bị của bạn không có kết nối internet. Vui lòng kiểm tra lại."
           });
         }
       });
@@ -68,8 +68,8 @@ const withSyncLoading = <P extends object>(
               <ActivityIndicator size="small" color="gray" />
               <Text style={styles.loadingText}>
                 {syncProgress < 100
-                  ? `Đang đồng bộ dữ liệu: ${syncProgress}%`
-                  : "Đồng bộ thành công!"}
+                  ? i18n.t("sync_loading.sync_progress", { progress: syncProgress }) // Dịch "Đang đồng bộ dữ liệu: {{progress}}%"
+                  : i18n.t("sync_loading.sync_complete")} {/* Dịch "Đồng bộ thành công!" */}
               </Text>
             </View>
           </View>

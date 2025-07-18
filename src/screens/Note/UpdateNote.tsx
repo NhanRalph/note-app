@@ -206,7 +206,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
       >
-        <Text style={styles.title}>{t('update_note.screen_title')}</Text> {/* Dịch "Chỉnh sửa ghi chú" */}
+        <Text style={styles.title}>{t('update_note.screen_title')}</Text>
 
         <Formik
           initialValues={initialValues}
@@ -232,7 +232,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
               <>
                 <TextInput
                   style={styles.input}
-                  placeholder={t('update_note.title_placeholder')} // Dịch "Tiêu đề ghi chú"
+                  placeholder={t('update_note.title_placeholder')}
                   placeholderTextColor="#999"
                   onChangeText={handleChange("title")}
                   onBlur={handleBlur("title")}
@@ -244,7 +244,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
 
                 <TextInput
                   style={[styles.input, styles.textArea]}
-                  placeholder={t('update_note.content_placeholder')} // Dịch "Nội dung ghi chú"
+                  placeholder={t('update_note.content_placeholder')}
                   placeholderTextColor="#999"
                   onChangeText={handleChange("content")}
                   onBlur={handleBlur("content")}
@@ -257,7 +257,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                   <Text style={styles.error}>{errors.content}</Text>
                 )}
 
-                <Text style={styles.label}>{t('update_note.group_label')}</Text> {/* Dịch "Nhóm" */}
+                <Text style={styles.label}>{t('update_note.group_label')}</Text>
 
                 <TouchableOpacity
                   style={styles.dropdown}
@@ -298,12 +298,12 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                         });
                       }}
                     >
-                      <Text>{t('update_note.add_new_group_button')}</Text> {/* Dịch "Thêm mới" */}
+                      <Text>{t('update_note.add_new_group_button')}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
 
-                <Text style={styles.label}>{t('update_note.images_label')} ({images.length}/5)</Text> {/* Dịch "Hình ảnh" */}
+                <Text style={styles.label}>{t('update_note.images_label')} ({images.length}/5)</Text>
 
                 <View style={styles.imageContainer}>
                   {images.map((uri, index) => (
@@ -328,7 +328,7 @@ const UpdateNoteScreen: React.FC<UpdateNoteScreenProps> = ({ route }) => {
                 </View>
 
                 <Button
-                  title={t('update_note.update_button')} // Dịch "Chỉnh sửa"
+                  title={t('update_note.update_button')}
                   size="large"
                   color={Colors.primary600}
                   onPress={handleSubmit}

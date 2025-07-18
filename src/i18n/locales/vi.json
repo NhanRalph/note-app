@@ -189,5 +189,13 @@
     "facebook_button": "Facebook",
     "success_title": "Thành công",
     "success_message": "Tạo tài khoản thành công!"
+  },
+  "sync_loading": {
+    "internet_connected_title": "Kết nối Internet",
+    "internet_connected_message": "Thiết bị của bạn đã kết nối internet. Bắt đầu đồng bộ dữ liệu...",
+    "internet_disconnected_title": "Mất kết nối Internet",
+    "internet_disconnected_message": "Thiết bị của bạn không có kết nối internet. Vui lòng kiểm tra lại.",
+    "sync_progress": "Đang đồng bộ dữ liệu: {{progress}}%",
+    "sync_complete": "Đồng bộ thành công!"
   }
 }

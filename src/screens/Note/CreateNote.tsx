@@ -74,8 +74,9 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
     selectedGroupId === "all" ||
     selectedGroupId === "pinned" ||
     selectedGroupId === "locked"
-      ? t('create_note.no_group') // Dịch "Không thuộc nhóm nào"
-      : groups.find((g) => g.id === selectedGroupId)?.name || t('create_note.unknown_group'); // Dịch "Không rõ"
+      ? t("create_note.no_group") // Dịch "Không thuộc nhóm nào"
+      : groups.find((g) => g.id === selectedGroupId)?.name ||
+        t("create_note.unknown_group"); // Dịch "Không rõ"
 
   const initialValues = {
     title: "",
@@ -85,19 +86,19 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   useEffect(() => {
     if (!userId || draftNote) return;
     const fetchDraftNote = async () => {
-      console.log(t('create_note.creating_draft_start')); // Dịch "🌀 Bắt đầu tạo draft..."
+      console.log(t("create_note.creating_draft_start")); // Dịch "🌀 Bắt đầu tạo draft..."
 
       const isConnected = await hasInternetConnection();
       if (!isConnected) {
         const draft = await createDraftNote(userId);
-        console.log(t('create_note.draft_offline_success'), draft); // Dịch "✅ Draft Offline tạo xong:"
+        console.log(t("create_note.draft_offline_success"), draft); // Dịch "✅ Draft Offline tạo xong:"
         setDraftNote(draft);
         return;
       }
 
       try {
         const draft = await createDraftNote(userId);
-        console.log(t('create_note.draft_success'), draft); // Dịch "✅ Draft tạo xong:"
+        console.log(t("create_note.draft_success"), draft); // Dịch "✅ Draft tạo xong:"
 
         if (draft) {
           setDraftNote(draft);
@@ -105,7 +106,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
         }
       } catch (error) {
         console.error("❌ Lỗi khi tạo draft:", error);
-        Alert.alert(t('common.error'), t('create_note.draft_creation_failed')); // Dịch "Lỗi", "Không thể tạo ghi chú nháp. Vui lòng thử lại."
+        Alert.alert(t("common.error"), t("create_note.draft_creation_failed")); // Dịch "Lỗi", "Không thể tạo ghi chú nháp. Vui lòng thử lại."
       }
     };
 
@@ -114,12 +115,18 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
   const handlePickImage = async () => {
     if (images.length >= 5) {
-      Alert.alert(t('common.notification'), t('create_note.max_images_reached')); // Dịch "Thông báo", "Chỉ chọn tối đa 5 hình ảnh."
+      Alert.alert(
+        t("common.notification"),
+        t("create_note.max_images_reached")
+      ); // Dịch "Thông báo", "Chỉ chọn tối đa 5 hình ảnh."
       return;
     }
 
     if (!draftNote) {
-      Alert.alert(t('common.notification'), t('create_note.note_not_initialized')); // Dịch "Thông báo", "Ghi chú chưa được khởi tạo."
+      Alert.alert(
+        t("common.notification"),
+        t("create_note.note_not_initialized")
+      ); // Dịch "Thông báo", "Ghi chú chưa được khởi tạo."
       return;
     }
 
@@ -158,12 +165,18 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   const handleSubmit = async (values: { title: string; content: string }) => {
     try {
       if (!selectedGroupId) {
-        Alert.alert(t('common.notification'), t('create_note.select_group_required')); // Dịch "Thông báo", "Vui lòng chọn nhóm cho ghi chú."
+        Alert.alert(
+          t("common.notification"),
+          t("create_note.select_group_required")
+        ); // Dịch "Thông báo", "Vui lòng chọn nhóm cho ghi chú."
         return;
       }
 
       if (!draftNote) {
-        Alert.alert(t('common.notification'), t('create_note.note_not_initialized')); // Dịch "Thông báo", "Ghi chú chưa được khởi tạo."
+        Alert.alert(
+          t("common.notification"),
+          t("create_note.note_not_initialized")
+        ); // Dịch "Thông báo", "Ghi chú chưa được khởi tạo."
         return;
       }
 
@@ -185,8 +198,8 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
         Toast.show({
           type: "success",
-          text1: t('common.success'), // Dịch "Thành công"
-          text2: t('create_note.create_success'), // Dịch "Đã tạo ghi chú!"
+          text1: t("common.success"), // Dịch "Thành công"
+          text2: t("create_note.create_success"), // Dịch "Đã tạo ghi chú!"
         });
 
         navigation.goBack();
@@ -212,8 +225,8 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
         Toast.show({
           type: "info",
-          text1: t('create_note.saved_offline_title'), // Dịch "Đã lưu offline"
-          text2: t('create_note.saved_offline_message'), // Dịch "Ghi chú sẽ được đồng bộ khi có mạng."
+          text1: t("create_note.saved_offline_title"), // Dịch "Đã lưu offline"
+          text2: t("create_note.saved_offline_message"), // Dịch "Ghi chú sẽ được đồng bộ khi có mạng."
         });
 
         navigation.goBack();
@@ -222,7 +235,7 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
       }
     } catch (error) {
       console.error("Error creating note:", error);
-      Alert.alert(t('common.error'), t('create_note.create_failed')); // Dịch "Lỗi", "Không thể tạo ghi chú."
+      Alert.alert(t("common.error"), t("create_note.create_failed")); // Dịch "Lỗi", "Không thể tạo ghi chú."
     } finally {
       setLoading(false);
     }
@@ -236,25 +249,25 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
 
     if (images.length > 0 || values.title || values.content) {
       Alert.alert(
-        t('common.confirmation'), // Dịch "Xác nhận"
-        t('create_note.exit_confirm_message'), // Dịch "Bạn có chắc muốn rời khỏi trang này? Tất cả thay đổi sẽ không được lưu."
+        t("common.confirmation"), // Dịch "Xác nhận"
+        t("create_note.exit_confirm_message"), // Dịch "Bạn có chắc muốn rời khỏi trang này? Tất cả thay đổi sẽ không được lưu."
         [
-          { text: t('common.cancel'), style: "cancel" }, // Dịch "Hủy"
+          { text: t("common.cancel"), style: "cancel" }, // Dịch "Hủy"
           {
-            text: t('create_note.exit_confirm_button'), // Dịch "Rời khỏi"
+            text: t("create_note.exit_confirm_button"), // Dịch "Rời khỏi"
             onPress: async () => {
-              await deleteNote(userId, draftNote.id)
-              navigation.goBack()
+              await deleteNote(userId, draftNote.id);
+              navigation.goBack();
             },
             style: "destructive",
           },
         ]
       );
     } else {
-      await deleteNote(userId, draftNote.id)
+      await deleteNote(userId, draftNote.id);
       navigation.goBack();
     }
-  }
+  };
 
   // if (!draftNote) {
   //   return (
@@ -265,148 +278,151 @@ const CreateNoteScreen: React.FC<CreateNoteScreenProps> = ({ route }) => {
   // }
 
   return (
-    <View style={styles.container}><Formik
-          initialValues={{
-            title: draftNote?.title || "",
-            content: draftNote?.content || "",
-          }}
-          validationSchema={createNoteSchema}
-          onSubmit={handleSubmit}
-        >
-          {({
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            values,
-            errors,
-            touched,
-            dirty,
-          }) => (
-            <>
-            
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={() => handleBack(values)}
+    <View style={styles.container}>
+      <Formik
+        initialValues={{
+          title: draftNote?.title || "",
+          content: draftNote?.content || "",
+        }}
+        validationSchema={createNoteSchema}
+        onSubmit={handleSubmit}
       >
-        <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
-      </TouchableOpacity>
-      <ScrollView
-        style={{ flex: 1 }}
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled
-      >
-        <Text style={styles.title}>{t('create_note.screen_title')}</Text> {/* Dịch "Tạo ghi chú" */}
-        <Text style={styles.title}>{draftNote?.id ? draftNote.id : ""}</Text>
+        {({
+          handleChange,
+          handleBlur,
+          handleSubmit,
+          values,
+          errors,
+          touched,
+          dirty,
+        }) => (
+          <>
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => handleBack(values)}
+            >
+              <Ionicons name="arrow-back" size={24} color={Colors.primary600} />
+            </TouchableOpacity>
+            <ScrollView
+              style={{ flex: 1 }}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled
+            >
+              <Text style={styles.title}>{t("create_note.screen_title")}</Text>
+              <Text style={styles.title}>
+                {draftNote?.id ? draftNote.id : ""}
+              </Text>
 
-        
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder={t('create_note.title_placeholder')} // Dịch "Tiêu đề ghi chú"
-                placeholderTextColor="#999"
-                onChangeText={handleChange("title")}
-                onBlur={handleBlur("title")}
-                value={values.title}
-              />
-              {touched.title && errors.title && (
-                <Text style={styles.error}>{errors.title}</Text>
-              )}
-
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder={t('create_note.content_placeholder')} // Dịch "Nội dung ghi chú"
-                placeholderTextColor="#999"
-                onChangeText={handleChange("content")}
-                onBlur={handleBlur("content")}
-                value={values.content}
-                multiline
-                numberOfLines={4}
-              />
-              {touched.content && errors.content && (
-                <Text style={styles.error}>{errors.content}</Text>
-              )}
-
-              <Text style={styles.label}>{t('create_note.group_label')}</Text> {/* Dịch "Nhóm" */}
-
-              <TouchableOpacity
-                style={styles.dropdown}
-                onPress={() => setDropdownVisible((prev) => !prev)}
-              >
-                <Text style={styles.dropdownText}>{selectedGroupName}</Text>
-                <Ionicons
-                  name={dropdownVisible ? "chevron-up" : "chevron-down"}
-                  size={20}
-                  color="#333"
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder={t("create_note.title_placeholder")}
+                  placeholderTextColor="#999"
+                  onChangeText={handleChange("title")}
+                  onBlur={handleBlur("title")}
+                  value={values.title}
                 />
-              </TouchableOpacity>
+                {touched.title && errors.title && (
+                  <Text style={styles.error}>{errors.title}</Text>
+                )}
 
-              {dropdownVisible && (
-                <View style={[styles.dropdownList, { maxHeight: 200 }]}>
-                  <ScrollView nestedScrollEnabled>
-                    {groups.map((group) => (
-                      <TouchableOpacity
-                        key={group.id}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setSelectedGroupId(group.id);
-                          setDropdownVisible(false);
-                        }}
-                      >
-                        <Text>{group.name}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                  <TouchableOpacity
-                    style={[
-                      styles.dropdownItem,
-                      { justifyContent: "center", alignItems: "center" },
-                    ]}
-                    onPress={() => {
-                      navigation.navigate("CreateGroup", { userId: userId });
-                    }}
-                  >
-                    <Text>{t('create_note.add_new_group_button')}</Text> {/* Dịch "Thêm mới" */}
-                  </TouchableOpacity>
-                </View>
-              )}
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder={t("create_note.content_placeholder")}
+                  placeholderTextColor="#999"
+                  onChangeText={handleChange("content")}
+                  onBlur={handleBlur("content")}
+                  value={values.content}
+                  multiline
+                  numberOfLines={4}
+                />
+                {touched.content && errors.content && (
+                  <Text style={styles.error}>{errors.content}</Text>
+                )}
 
-              <Text style={styles.label}>{t('create_note.images_label')} ({images.length}/5)</Text> {/* Dịch "Hình ảnh" */}
+                <Text style={styles.label}>{t("create_note.group_label")}</Text>
 
-              <View style={styles.imageContainer}>
-                {images.map((uri, index) => (
-                  <View key={index} style={styles.imageWrapper}>
-                    <Image source={{ uri }} style={styles.image} />
+                <TouchableOpacity
+                  style={styles.dropdown}
+                  onPress={() => setDropdownVisible((prev) => !prev)}
+                >
+                  <Text style={styles.dropdownText}>{selectedGroupName}</Text>
+                  <Ionicons
+                    name={dropdownVisible ? "chevron-up" : "chevron-down"}
+                    size={20}
+                    color="#333"
+                  />
+                </TouchableOpacity>
+
+                {dropdownVisible && (
+                  <View style={[styles.dropdownList, { maxHeight: 200 }]}>
+                    <ScrollView nestedScrollEnabled>
+                      {groups.map((group) => (
+                        <TouchableOpacity
+                          key={group.id}
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setSelectedGroupId(group.id);
+                            setDropdownVisible(false);
+                          }}
+                        >
+                          <Text>{group.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
                     <TouchableOpacity
-                      style={styles.removeBtn}
-                      onPress={() => handleRemoveImage(index)}
+                      style={[
+                        styles.dropdownItem,
+                        { justifyContent: "center", alignItems: "center" },
+                      ]}
+                      onPress={() => {
+                        navigation.navigate("CreateGroup", { userId: userId });
+                      }}
                     >
-                      <Ionicons name="close" size={16} color="#fff" />
+                      <Text>{t("create_note.add_new_group_button")}</Text>
                     </TouchableOpacity>
                   </View>
-                ))}
-                {images.length < 5 && (
-                  <TouchableOpacity
-                    style={styles.addImageBtn}
-                    onPress={handlePickImage}
-                  >
-                    <Ionicons name="add" size={24} color="#666" />
-                  </TouchableOpacity>
                 )}
-              </View>
 
-              <Button
-                title={t('create_note.create_note_button')}
-                size="large"
-                color={Colors.primary600}
-                onPress={handleSubmit}
-                loading={loading}
-                disabled={!dirty}
-              />
-            </>
-      </ScrollView>
-            </>
-          )}
-        </Formik>
+                <Text style={styles.label}>
+                  {t("create_note.images_label")} ({images.length}/5)
+                </Text>
+
+                <View style={styles.imageContainer}>
+                  {images.map((uri, index) => (
+                    <View key={index} style={styles.imageWrapper}>
+                      <Image source={{ uri }} style={styles.image} />
+                      <TouchableOpacity
+                        style={styles.removeBtn}
+                        onPress={() => handleRemoveImage(index)}
+                      >
+                        <Ionicons name="close" size={16} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  {images.length < 5 && (
+                    <TouchableOpacity
+                      style={styles.addImageBtn}
+                      onPress={handlePickImage}
+                    >
+                      <Ionicons name="add" size={24} color="#666" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <Button
+                  title={t("create_note.create_note_button")}
+                  size="large"
+                  color={Colors.primary600}
+                  onPress={handleSubmit}
+                  loading={loading}
+                  disabled={!dirty}
+                />
+              </>
+            </ScrollView>
+          </>
+        )}
+      </Formik>
     </View>
   );
 };
